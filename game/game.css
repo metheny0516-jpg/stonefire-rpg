@@ -3,3 +3,47 @@
 .bag{height:25px;min-height:0;padding:0 8px;border:1px solid #687088;background:#171d2b;box-shadow:none;font-size:11px;line-height:1}.bag:disabled{opacity:.45}.bag-list{max-height:145px;overflow:auto;text-align:left}.bag-row{display:grid;grid-template-columns:1fr auto;align-items:center;gap:6px;padding:6px 2px;border-bottom:1px solid #384157}.bag-row small{display:block;color:#b9c2d5;margin-top:2px;font-size:10px}.bag-row button{min-width:53px;min-height:35px;margin:0;padding:4px 6px;font-size:12px}
 .member>div>small{display:block;color:#ffd866;font-size:9px;line-height:1.1;margin-top:1px}
 .member.active-turn{background:linear-gradient(90deg,#42351d88,transparent);box-shadow:inset 3px 0 #ffd866}.member.active-turn b:first-child{color:#ffe68a;text-shadow:0 0 7px #ffb23d}.member.guarding{box-shadow:inset 3px 0 #72d9ff}.member.charged{background:linear-gradient(90deg,#4b214f88,transparent)}
+
+/* ワザが増えたぶん、ワザ欄は溢れたらスクロールさせる */
+.skillmenu.show{max-height:max(150px,calc(100dvh - 450px));overflow-y:auto;overscroll-behavior:contain;align-content:start;grid-auto-rows:minmax(54px,auto)}
+@media(max-height:680px){.skillmenu{grid-template-rows:52px 52px!important}.skillmenu.show{grid-auto-rows:minmax(48px,auto)}.skillmenu button{min-height:46px!important;font-size:14px}.skillmenu button small{font-size:10px;margin-top:2px}}
+
+/* セーブ枠(3スロット)の選択画面 */
+.overlay.slot-screen{position:fixed;inset:0;z-index:50;padding:12px;background:#050711f5;align-content:center}
+.slot-screen .card{width:100%;max-width:430px;margin:auto;padding:12px 11px;max-height:100%;overflow:auto}
+.slot-screen .card h1{font-size:20px;margin:0 0 4px}
+.slot-note{font-size:12px;line-height:1.4;margin:0 0 8px;color:#c3cade}
+.slot-list{display:grid;gap:7px;margin-bottom:8px}
+.slot-card{border:2px solid #5c6479;background:#161c2b;padding:7px 8px;text-align:left}
+.slot-card.current{border-color:var(--gold);box-shadow:0 0 0 1px #6b4d13}
+.slot-head{display:flex;justify-content:space-between;align-items:baseline;gap:6px;font-size:13px;color:var(--gold)}
+.slot-head span{font-size:11px;color:#b6bdd0}
+.slot-body{font-size:12px;line-height:1.45;margin:3px 0 6px;color:#e6e9f2}
+.slot-body small{display:block;margin-top:2px;font-size:10px;color:#98a1b8}
+.slot-btns{display:grid;grid-template-columns:1fr auto;gap:6px}
+.slot-btns button{min-height:34px;padding:4px 10px;font-size:13px;margin:0}
+.slot-btns .danger{color:#ffb3ab;border-color:#7c4a4a;background:#2b1d22}
+.slot-btns button[disabled]{opacity:.55}
+.bag-slot{font-size:11px;color:#98a1b8;margin:6px 0 2px}
+
+/* 街の施設(宿屋・店・そうび)とかばん */
+.overlay.town-screen{position:fixed;inset:0;z-index:50;padding:12px;background:#050711f5;align-content:center}
+.town-screen .card{width:100%;max-width:430px;margin:auto;padding:12px 11px;max-height:100%;overflow:auto}
+.town-screen .card h1{font-size:20px;margin:0 0 6px}
+.shop-note{font-size:12px;line-height:1.45;color:#c3cade;margin:0 0 8px}
+.shop-gold{font-size:12px;color:var(--gold);margin:6px 0;text-align:right}
+.shop-tabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:4px}
+.shop-tabs button{min-height:32px;padding:3px 8px;font-size:13px;margin:0;background:#1a2130}
+.shop-tabs button.on{background:#3d4a68;border-color:var(--gold);color:var(--gold)}
+.shop-list{display:grid;gap:6px;margin-bottom:8px}
+.shop-row{display:grid;grid-template-columns:1fr auto;align-items:center;gap:8px;border:2px solid #4f586d;background:#161c2b;padding:6px 8px;text-align:left}
+.shop-row.current{border-color:var(--gold)}
+.shop-row b{font-size:13px;display:block}
+.shop-row small{display:block;font-size:10px;line-height:1.35;color:#9ba4ba;margin-top:2px}
+.shop-row button{min-height:32px;padding:3px 10px;font-size:13px;margin:0;white-space:nowrap}
+.shop-row button[disabled]{opacity:.5}
+.equip-card{border:2px solid #5c6479;background:#131926;padding:7px 8px;margin-bottom:7px}
+.equip-head{display:flex;justify-content:space-between;align-items:baseline;font-size:13px;color:var(--gold);margin-bottom:5px}
+.equip-head span{font-size:11px;color:#cdd4e6}
+.equip-card .shop-row{margin-top:5px}
+.gold{color:var(--gold);font-weight:700}

@@ -4,35 +4,46 @@ export function selectEnemyAction(enemy, random = Math.random) {
   const turn = Number(enemy.turn) || 0;
   const hpRate = enemy.maxHp > 0 ? enemy.hp / enemy.maxHp : 0;
 
+  // 予告なしの痛恨の一撃。低確率だが、油断していると一撃で持っていかれる。
+  if (random() < (enemy.boss ? 0.07 : 0.045)) {
+    return {
+      type: "single",
+      label: `${enemy.name}の痛恨の一撃！！`,
+      multiplier: enemy.boss ? 3.4 : 2.9,
+      savage: true,
+      clearsCharge: true,
+    };
+  }
+
   if (enemy.behavior === "charge") {
-    if (enemy.charging) return { type: "single", label: "影牙の飛びかかり", multiplier: 1.75, clearsCharge: true };
+    if (enemy.charging) return { type: "single", label: "影牙の飛びかかり", multiplier: 1.95, clearsCharge: true };
     if (random() < 0.32) return { type: "charge", label: "影牙は低く身構えた……" };
   }
   if (enemy.behavior === "swift" && random() < 0.34) {
-    return { type: "single", label: "ヨルハネの連続かみつき", multiplier: 0.68, hits: 2 };
+    return { type: "single", label: "ヨルハネの連続かみつき", multiplier: 0.78, hits: 2 };
   }
   if (enemy.behavior === "spore" && random() < 0.3) {
-    return { type: "single", label: "コケマルの生命吸収", multiplier: 0.78, drain: 0.6 };
+    return { type: "single", label: "コケマルの生命吸収", multiplier: 0.88, drain: 0.6 };
   }
   if (enemy.behavior === "drain" && random() < 0.34) {
-    return { type: "single", label: "月燐の魂すすり", multiplier: 0.9, drain: 0.5 };
+    return { type: "single", label: "月燐の魂すすり", multiplier: 1.0, drain: 0.5 };
   }
   if (enemy.behavior === "fireBoss" && hpRate <= 0.55 && random() < 0.42) {
-    return { type: "all", label: "焔角のガルドの灼熱息", multiplier: 0.82 };
+    return { type: "all", label: "焔角のガルドの灼熱息", multiplier: 0.95 };
   }
   if (enemy.behavior === "eclipseBoss" && turn > 0 && turn % 3 === 0) {
-    return { type: "all", label: "月蝕のヴァルグの月蝕波", multiplier: 0.95 };
+    return { type: "all", label: "月蝕のヴァルグの月蝕波", multiplier: 1.1 };
   }
   if (enemy.behavior === "crystal") {
-    if (enemy.charging) return { type: "single", label: "砕城突進", multiplier: 1.8, clearsCharge: true };
+    if (enemy.charging) return { type: "single", label: "砕城突進", multiplier: 2.05, clearsCharge: true };
     if (random() < 0.28) return { type: "charge", label: "晶殻が蒼く鳴り始めた……" };
   }
   if (enemy.behavior === "gale" && random() < 0.38) {
-    return { type: "single", label: "裂空連舞", multiplier: 0.72, hits: 2 };
+    return { type: "single", label: "裂空連舞", multiplier: 0.82, hits: 2 };
   }
   if (enemy.behavior === "astralBoss") {
-    if (turn > 0 && turn % 4 === 0) return { type: "all", label: "星界崩し", multiplier: 1.08 };
-    if (hpRate <= 0.45 && random() < 0.32) return { type: "single", label: "六翼の断空", multiplier: 0.68, hits: 3 };
+    if (turn > 0 && turn % 4 === 0) return { type: "all", label: "星界崩し", multiplier: 1.25 };
+    if (hpRate <= 0.45 && random() < 0.32) return { type: "single", label: "六翼の断空", multiplier: 0.78, hits: 3 };
   }
   return { type: "single", label: `${enemy.name}の攻撃`, multiplier: 1, hits: 1 };
 }
@@ -91,6 +102,7 @@ export function waitBonuses(currentExpBoost = 1) {
 }
 
 export function sparkChanceForAction(action, charged = false) {
-  const base = { attack: 0.07, guard: 0.13, wait: 0.28, skill: 0.06, item: 0.03 }[action] || 0.04;
-  return base + (charged ? 0.05 : 0);
+  // ときどき閃く程度に抑える。ためた直後だけ +3%。
+  const base = { attack: 0.04, guard: 0.04, wait: 0.05, skill: 0.03, item: 0.01 }[action];
+  return (base === undefined ? 0.02 : base) + (charged ? 0.03 : 0);
 }
