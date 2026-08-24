@@ -33,13 +33,16 @@ export function migrateSave(raw) {
   // 旧版のくすり数を、新しい所持品データへ引き継ぐ。
   const chapter = raw.chapter === 3 ? 3 : raw.chapter === 2 ? 2 : 1;
   const legacyPotions = Math.max(0, Number(raw.hero?.potions) || 0);
-  const inventory = raw.inventory && typeof raw.inventory === "object"
-    ? { ...raw.inventory }
-    : { potion: legacyPotions };
-  // 過去版ですでに倒したボスの討伐品も失わせない。
-  if ((chapter >= 2 || raw.cleared) && !inventory.flameHorn) inventory.flameHorn = 1;
-  if ((chapter === 3 || (chapter === 2 && raw.cleared)) && !inventory.eclipseWing) inventory.eclipseWing = 1;
-  if (chapter === 3 && raw.cleared && !inventory.astralCore) inventory.astralCore = 1;
+  const hadInventory = raw.inventory && typeof raw.inventory === "object";
+  const inventory = hadInventory ? { ...raw.inventory } : { potion: legacyPotions };
+  // 所持品データを持たない過去版のセーブにだけ、討伐済みボスの証を補う。
+  // 所持品を持つセーブでは補わない。補うと、売った討伐品が読み込みのたびに
+  // 復活してしまい、無限にゴールドを稼げてしまうため。
+  if (!hadInventory) {
+    if (chapter >= 2 || raw.cleared) inventory.flameHorn = 1;
+    if (chapter === 3 || (chapter === 2 && raw.cleared)) inventory.eclipseWing = 1;
+    if (chapter === 3 && raw.cleared) inventory.astralCore = 1;
+  }
   const hero = { ...raw.hero };
   const companion = { ...(raw.companion || {}) };
   // v4以前でレベル習得済みだったワザを、v5の閃き式へ失わず移行する。

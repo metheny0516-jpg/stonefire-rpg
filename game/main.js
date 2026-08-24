@@ -285,8 +285,9 @@ function renderShop(){
   let sellable=kind==='item'
    ? Object.keys(ITEMS).filter(id=>itemCount(id)>0&&(ITEMS[id].sell||ITEMS[id].price))
    : Object.keys(EQUIPMENT).filter(id=>EQUIPMENT[id].slot===kind&&spareGear(id)>0);
-  rows=sellable.length?sellable.map(id=>{let price=sellPriceOf(id),count=EQUIPMENT[id]?spareGear(id):itemCount(id);
-   return shopRow(id,'sell',price,price+'G',(EQUIPMENT[id]?gearNote(id):ITEMS[id].desc)+'　売れる数 '+count)}).join('')
+  rows=sellable.length?sellable.map(id=>{let price=sellPriceOf(id),count=EQUIPMENT[id]?spareGear(id):itemCount(id),
+    note=(EQUIPMENT[id]?gearNote(id):ITEMS[id].desc)+'　売れる数 '+count+(ITEMS[id]?.precious?'　※二度と手に入らない':'');
+   return shopRow(id,'sell',price,price+'G',note)}).join('')
    :'<p class="shop-note">売れるものを持っていない。</p>';
  }
  openTownCard('<h1>'+shopTitle(kind)+'</h1>'
@@ -300,11 +301,12 @@ function renderShop(){
   let id=b.dataset.buy,price=priceOf(id);if(gold()<price){sfx('cancel');return}
   addGold(-price);if(EQUIPMENT[id])addGear(id,1);else addItem(id,1);
   sfx('itemGet');renderShop();saveGame()});
- $('#overlayCard').querySelectorAll('[data-sell]').forEach(b=>b.onclick=()=>{
+ $('#overlayCard').querySelectorAll('[data-sell]').forEach(b=>{let armed=false;b.onclick=()=>{
   let id=b.dataset.sell,price=sellPriceOf(id);
+  if(ITEMS[id]?.precious&&!armed){armed=true;sfx('cancel');b.textContent='本当に売る？';return}
   if(EQUIPMENT[id]){if(spareGear(id)<=0){sfx('cancel');return}addGear(id,-1)}
   else{if(itemCount(id)<=0){sfx('cancel');return}consumeItem(id)}
-  addGold(price);sfx('confirm');renderShop();saveGame()});
+  addGold(price);sfx('confirm');renderShop();saveGame()}});
 }
 // --- そうび ---
 function openEquip(back){
@@ -333,7 +335,7 @@ function openEquipPick(who,slot,back){
  $('#overlayCard').querySelectorAll('[data-equip]').forEach(b=>b.onclick=()=>{
   member.equip={...member.equip,[slot]:b.dataset.equip};sfx('itemGet');sync();saveGame();openEquip(back)});
 }
-function showInventory(){if((state.mode!=='field'&&state.mode!=='town')||state.busy||$('#overlay').classList.contains('show'))return;sfx('menuOpen');let entries=inventoryEntries(),canHeal=!!mostInjuredMember();$('#overlay').classList.remove('clear-screen','slot-screen');$('#overlay').classList.add('town-screen');$('#overlayCard').innerHTML='<h1>かばん</h1><div class="bag-list">'+(entries.length?entries.map(([id,item])=>'<div class="bag-row"><div><b>'+item.icon+' '+item.name+' ×'+itemCount(id)+'</b><small>'+item.desc+'</small></div>'+(item.usable?'<button data-field-item="'+id+'" '+(canHeal?'':'disabled')+'>使う</button>':'')+'</div>').join(''):'<p>かばんは空っぽだ。</p>')+'</div><p class="bag-slot">所持 '+gold()+'G　／　セーブ枠 '+currentSlot()+' に自動セーブ中</p><button id="openEquipBtn">そうび</button><button id="openSlots">セーブ枠</button><button id="closeBag">とじる</button>';$('#overlay').classList.add('show');$('#openEquipBtn').onclick=()=>openEquip();$('#openSlots').onclick=()=>{sfx('menuOpen');saveGame();showSlotScreen(false)};$('#closeBag').onclick=()=>{sfx('menuClose');hideOverlay()};$('#overlayCard').querySelectorAll('[data-field-item]').forEach(button=>button.onclick=()=>consumeFieldItem(button.dataset.fieldItem))}
+function showInventory(){if((state.mode!=='field'&&state.mode!=='town')||state.busy||$('#overlay').classList.contains('show'))return;sfx('menuOpen');let entries=inventoryEntries(),canHeal=!!mostInjuredMember();$('#overlay').classList.remove('clear-screen','slot-screen');$('#overlay').classList.add('town-screen');$('#overlayCard').innerHTML='<h1>かばん</h1><div class="bag-list">'+(entries.length?entries.map(([id,item])=>'<div class="bag-row"><div><b>'+item.icon+' '+item.name+' ×'+itemCount(id)+'</b><small>'+item.desc+(sellPriceOf(id)?'　／ 道具屋で '+sellPriceOf(id)+'G':'')+'</small></div>'+(item.usable?'<button data-field-item="'+id+'" '+(canHeal?'':'disabled')+'>使う</button>':'')+'</div>').join(''):'<p>かばんは空っぽだ。</p>')+'</div><p class="bag-slot">所持 '+gold()+'G　／　セーブ枠 '+currentSlot()+' に自動セーブ中</p><button id="openEquipBtn">そうび</button><button id="openSlots">セーブ枠</button><button id="closeBag">とじる</button>';$('#overlay').classList.add('show');$('#openEquipBtn').onclick=()=>openEquip();$('#openSlots').onclick=()=>{sfx('menuOpen');saveGame();showSlotScreen(false)};$('#closeBag').onclick=()=>{sfx('menuClose');hideOverlay()};$('#overlayCard').querySelectorAll('[data-field-item]').forEach(button=>button.onclick=()=>consumeFieldItem(button.dataset.fieldItem))}
 function consumeFieldItem(id){let item=ITEMS[id];if(!item?.usable||itemCount(id)<=0)return;let targets=item.healAll?[state.hero,...(state.companion.active?[state.companion]:[])].filter(v=>v.hp>0&&v.hp<v.maxHp):[mostInjuredMember()].filter(Boolean);if(!targets.length)return;consumeItem(id);let total=0;targets.forEach(target=>{let heal=Math.min(item.healAll||item.heal,target.maxHp-target.hp);target.hp+=heal;total+=heal});sfx('potion');setMsg(item.name+'を使い、HPが合計 '+total+' 回復した！');sync();draw();saveGame();hideOverlay()}
 function showOverlay(type){let clear=type==='clear',h=state.hero,m=state.companion,ch2=state.chapter===2,ch3=state.chapter===3,party=m.active?'<br>ミナ LV '+m.lv+'　HP '+m.hp+' / '+m.maxHp+'　EXP '+m.exp+' / '+m.next:'';$('#overlay').classList.toggle('clear-screen',clear);if(clear){if(ch3){$('#overlayCard').innerHTML='<h1>第3章 制覇！</h1><p>天穿の守護者は静まり、止まっていた星骸の塔が再び空を巡り始めた。</p><p><b>✓ 第3章クリアデータ保存済み</b><br>ルカ LV '+h.lv+'　HP '+h.hp+' / '+h.maxHp+'　EXP '+h.exp+' / '+h.next+party+'</p><button id="exploreClear">二人で天空回廊を探索する</button><button id="again">LV1からやり直す</button><p style="color:#ffb0a8">※やり直すとこのセーブ枠のデータは消えます</p>'}else if(ch2){$('#overlayCard').innerHTML='<h1>第2章 制覇！</h1><p>森に戻った月明かりが、雲海に浮かぶ古塔への道を照らした。</p><p><b>✓ 第2章クリアデータ保存済み</b><br>ルカ LV '+h.lv+'　HP '+h.hp+' / '+h.maxHp+'　EXP '+h.exp+' / '+h.next+party+'</p><button id="nextChapter3">第3章「星骸の塔」へ</button><button id="again">LV1からやり直す</button><p style="color:#ffb0a8">※やり直すとこのセーブ枠のデータは消えます</p>'}else{$('#overlayCard').innerHTML='<h1>第1章 制覇！</h1><p>焔角の魔物は消え、石牢に朝の光が差し込んだ。</p><p><b>✓ クリアデータ保存済み</b><br>ルカ LV '+h.lv+'　HP '+h.hp+' / '+h.maxHp+'<br>EXP '+h.exp+' / '+h.next+'</p><button id="nextChapter">ミナと第2章「月影の森」へ</button><button id="again">LV1からやり直す</button><p style="color:#ffb0a8">※やり直すとこのセーブ枠のデータは消えます</p>'}}else{$('#overlayCard').innerHTML='<h1>GAME OVER</h1><p>二人とも力尽きた……<br>最後のセーブ地点から再開できる。</p><button id="retrySave">セーブ地点から</button><button id="again">はじめから</button>'}$('#overlay').classList.add('show');if(clear){if(ch3){$('#exploreClear').onclick=()=>{state.mode='field';state.enemy=null;state.busy=false;hideOverlay();setMsg('ルカとミナは、星の風が巡る天空回廊を歩き出した。');sync();draw();saveGame()}}else if(ch2){$('#nextChapter3').onclick=startChapter3}else{$('#nextChapter').onclick=startChapter2}let armed=false;$('#again').onclick=()=>{if(!armed){armed=true;$('#again').textContent='本当にLV1からやり直す？';return}reset()}}else{$('#retrySave').onclick=()=>{let d=readSave();if(d){restoreSave(d);hideOverlay();setMsg(state.companion.active?'二人でセーブ地点から再開した。':'セーブ地点から再開した。');sync();draw()}else reset()};$('#again').onclick=reset}}
 function hideOverlay(){$('#overlay').classList.remove('show','clear-screen','slot-screen','town-screen')}

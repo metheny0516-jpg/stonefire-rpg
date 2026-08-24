@@ -181,12 +181,12 @@ export const ITEMS = Object.freeze({
   potion: Object.freeze({ name: "くすり", icon: "◆", desc: "仲間1人のHPを18回復", usable: true, heal: 18, price: 20, sell: 8 }),
   moonDrop: Object.freeze({ name: "月のしずく", icon: "☾", desc: "仲間全員のHPを12回復", usable: true, healAll: 12, price: 60, sell: 24 }),
   nightFeather: Object.freeze({ name: "夜羽", icon: "♢", desc: "ヨルハネが落とす黒紫の羽", sell: 12 }),
-  flameHorn: Object.freeze({ name: "焔角の欠片", icon: "▲", desc: "焔角のガルドを倒した証" }),
+  flameHorn: Object.freeze({ name: "焔角の欠片", icon: "▲", desc: "焔角のガルドを倒した証", sell: 180, precious: true }),
   shadowFang: Object.freeze({ name: "影牙のかけら", icon: "†", desc: "冷たい魔力を帯びた牙", sell: 24 }),
-  eclipseWing: Object.freeze({ name: "月蝕の羽", icon: "✦", desc: "月蝕のヴァルグを倒した証" }),
+  eclipseWing: Object.freeze({ name: "月蝕の羽", icon: "✦", desc: "月蝕のヴァルグを倒した証", sell: 420, precious: true }),
   skyCrystal: Object.freeze({ name: "蒼天晶", icon: "◇", desc: "星骸の塔で採れる淡青色の結晶", sell: 38 }),
   windSilk: Object.freeze({ name: "風紋の糸", icon: "≈", desc: "触れると微風を生む不思議な糸", sell: 36 }),
-  astralCore: Object.freeze({ name: "天穿の核", icon: "✺", desc: "天穿のオルディアを倒した証" }),
+  astralCore: Object.freeze({ name: "天穿の核", icon: "✺", desc: "天穿のオルディアを倒した証", sell: 900, precious: true }),
 });
 
 export const ASSETS = Object.freeze({
