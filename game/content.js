@@ -70,13 +70,20 @@ export const ENCOUNTERS = Object.freeze({
 export const BOSSES = Object.freeze({ 1: "boss", 2: "boss2", 3: "boss3" });
 
 export const SKILLS = Object.freeze([
-  Object.freeze({ id: "starfire", owner: "hero", name: "星火斬り", lv: 2, uses: 2, power: 1.55, kind: "fire", desc: "強力な炎の斬撃", spark: ["attack", "wait"] }),
-  Object.freeze({ id: "healing", owner: "hero", name: "光の癒し", lv: 3, uses: 1, heal: 16, kind: "heal", desc: "仲間1人のHPを16回復", spark: ["guard", "wait"] }),
-  Object.freeze({ id: "crescent", owner: "hero", name: "三日月返し", lv: 3, uses: 3, power: 1.35, kind: "slash", desc: "素早い二段斬り", spark: ["attack", "guard"] }),
-  Object.freeze({ id: "dawnblade", owner: "hero", name: "暁天一閃", lv: 5, uses: 1, power: 2.15, kind: "fire", desc: "渾身の一閃", spark: ["wait"] }),
-  Object.freeze({ id: "moonheal", owner: "mage", name: "月雫の癒し", lv: 1, uses: 2, heal: 18, kind: "moonheal", desc: "仲間1人のHPを18回復", spark: ["guard", "wait"] }),
-  Object.freeze({ id: "frostmoon", owner: "mage", name: "氷月弾", lv: 3, uses: 3, power: 1.45, kind: "moon", desc: "冷気をまとった魔弾", spark: ["attack", "guard"] }),
-  Object.freeze({ id: "starfall", owner: "mage", name: "星降り", lv: 5, uses: 1, power: 2, kind: "moon", desc: "星光を落とす大魔法", spark: ["wait"] }),
+  // ルカ: たたかう(=1.0倍)を基準に、段数・全体化・防御無視で役割を分ける
+  Object.freeze({ id: "crescent", owner: "hero", name: "三日月返し", lv: 2, uses: 3, power: 1.3, hits: 2, kind: "slash", motion: "crescent", desc: "二段斬り 威力1.3倍", spark: ["attack", "guard"] }),
+  Object.freeze({ id: "starfire", owner: "hero", name: "星火斬り", lv: 3, uses: 2, power: 1.6, kind: "fire", motion: "starfire", desc: "炎の斬撃 威力1.6倍", spark: ["attack", "wait"] }),
+  Object.freeze({ id: "healing", owner: "hero", name: "光の癒し", lv: 3, uses: 1, heal: 18, kind: "heal", motion: "heal", desc: "仲間1人のHPを18回復", spark: ["guard", "wait"] }),
+  Object.freeze({ id: "whirlblade", owner: "hero", name: "断空円舞", lv: 4, uses: 2, power: 0.95, target: "all", kind: "slash", motion: "whirl", desc: "敵全体 威力0.95倍", spark: ["attack", "guard"] }),
+  Object.freeze({ id: "armorbreak", owner: "hero", name: "鎧断ち", lv: 5, uses: 2, power: 1.45, ignoreDef: true, kind: "slash", motion: "pierce", desc: "防御無視 威力1.45倍", spark: ["attack", "wait"] }),
+  Object.freeze({ id: "dawnblade", owner: "hero", name: "暁天一閃", lv: 6, uses: 1, power: 2.2, kind: "fire", motion: "starfire", desc: "渾身の一閃 威力2.2倍", spark: ["wait"] }),
+  Object.freeze({ id: "tenfang", owner: "hero", name: "牙断ち乱れ", lv: 7, uses: 1, power: 1.95, hits: 3, kind: "slash", motion: "crescent", desc: "三段斬り 威力1.95倍", spark: ["attack"] }),
+  // ミナ
+  Object.freeze({ id: "moonheal", owner: "mage", name: "月雫の癒し", lv: 1, uses: 2, heal: 18, kind: "moonheal", motion: "moonheal", desc: "仲間1人のHPを18回復", spark: ["guard", "wait"] }),
+  Object.freeze({ id: "frostmoon", owner: "mage", name: "氷月弾", lv: 3, uses: 3, power: 1.4, kind: "moon", motion: "moon", desc: "冷気の魔弾 威力1.4倍", spark: ["attack", "guard"] }),
+  Object.freeze({ id: "starshower", owner: "mage", name: "星屑の雨", lv: 4, uses: 2, power: 0.9, target: "all", kind: "moon", motion: "starshower", desc: "敵全体 威力0.9倍", spark: ["attack", "wait"] }),
+  Object.freeze({ id: "moonveil", owner: "mage", name: "月光の護り", lv: 5, uses: 1, healAll: 14, kind: "moonheal", motion: "moonveil", desc: "仲間全員のHPを14回復", spark: ["guard", "wait"] }),
+  Object.freeze({ id: "starfall", owner: "mage", name: "星降り", lv: 6, uses: 1, power: 2.1, kind: "moon", motion: "starfall", desc: "星光の大魔法 威力2.1倍", spark: ["wait"] }),
 ]);
 
 export const ITEMS = Object.freeze({

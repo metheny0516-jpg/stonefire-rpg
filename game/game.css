@@ -3,3 +3,7 @@
 .bag{height:25px;min-height:0;padding:0 8px;border:1px solid #687088;background:#171d2b;box-shadow:none;font-size:11px;line-height:1}.bag:disabled{opacity:.45}.bag-list{max-height:145px;overflow:auto;text-align:left}.bag-row{display:grid;grid-template-columns:1fr auto;align-items:center;gap:6px;padding:6px 2px;border-bottom:1px solid #384157}.bag-row small{display:block;color:#b9c2d5;margin-top:2px;font-size:10px}.bag-row button{min-width:53px;min-height:35px;margin:0;padding:4px 6px;font-size:12px}
 .member>div>small{display:block;color:#ffd866;font-size:9px;line-height:1.1;margin-top:1px}
 .member.active-turn{background:linear-gradient(90deg,#42351d88,transparent);box-shadow:inset 3px 0 #ffd866}.member.active-turn b:first-child{color:#ffe68a;text-shadow:0 0 7px #ffb23d}.member.guarding{box-shadow:inset 3px 0 #72d9ff}.member.charged{background:linear-gradient(90deg,#4b214f88,transparent)}
+
+/* ワザが増えたぶん、ワザ欄は溢れたらスクロールさせる */
+.skillmenu.show{max-height:max(150px,calc(100dvh - 450px));overflow-y:auto;overscroll-behavior:contain;align-content:start;grid-auto-rows:minmax(54px,auto)}
+@media(max-height:680px){.skillmenu{grid-template-rows:52px 52px!important}.skillmenu.show{grid-auto-rows:minmax(48px,auto)}.skillmenu button{min-height:46px!important;font-size:14px}.skillmenu button small{font-size:10px;margin-top:2px}}

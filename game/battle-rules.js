@@ -91,6 +91,7 @@ export function waitBonuses(currentExpBoost = 1) {
 }
 
 export function sparkChanceForAction(action, charged = false) {
-  const base = { attack: 0.07, guard: 0.13, wait: 0.28, skill: 0.06, item: 0.03 }[action] || 0.04;
-  return base + (charged ? 0.05 : 0);
+  // ときどき閃く程度に抑える。ためた直後だけ +3%。
+  const base = { attack: 0.04, guard: 0.04, wait: 0.05, skill: 0.03, item: 0.01 }[action];
+  return (base === undefined ? 0.02 : base) + (charged ? 0.03 : 0);
 }
