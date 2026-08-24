@@ -7,3 +7,21 @@
 /* ワザが増えたぶん、ワザ欄は溢れたらスクロールさせる */
 .skillmenu.show{max-height:max(150px,calc(100dvh - 450px));overflow-y:auto;overscroll-behavior:contain;align-content:start;grid-auto-rows:minmax(54px,auto)}
 @media(max-height:680px){.skillmenu{grid-template-rows:52px 52px!important}.skillmenu.show{grid-auto-rows:minmax(48px,auto)}.skillmenu button{min-height:46px!important;font-size:14px}.skillmenu button small{font-size:10px;margin-top:2px}}
+
+/* セーブ枠(3スロット)の選択画面 */
+.overlay.slot-screen{position:fixed;inset:0;z-index:50;padding:12px;background:#050711f5;align-content:center}
+.slot-screen .card{width:100%;max-width:430px;margin:auto;padding:12px 11px;max-height:100%;overflow:auto}
+.slot-screen .card h1{font-size:20px;margin:0 0 4px}
+.slot-note{font-size:12px;line-height:1.4;margin:0 0 8px;color:#c3cade}
+.slot-list{display:grid;gap:7px;margin-bottom:8px}
+.slot-card{border:2px solid #5c6479;background:#161c2b;padding:7px 8px;text-align:left}
+.slot-card.current{border-color:var(--gold);box-shadow:0 0 0 1px #6b4d13}
+.slot-head{display:flex;justify-content:space-between;align-items:baseline;gap:6px;font-size:13px;color:var(--gold)}
+.slot-head span{font-size:11px;color:#b6bdd0}
+.slot-body{font-size:12px;line-height:1.45;margin:3px 0 6px;color:#e6e9f2}
+.slot-body small{display:block;margin-top:2px;font-size:10px;color:#98a1b8}
+.slot-btns{display:grid;grid-template-columns:1fr auto;gap:6px}
+.slot-btns button{min-height:34px;padding:4px 10px;font-size:13px;margin:0}
+.slot-btns .danger{color:#ffb3ab;border-color:#7c4a4a;background:#2b1d22}
+.slot-btns button[disabled]{opacity:.55}
+.bag-slot{font-size:11px;color:#98a1b8;margin:6px 0 2px}
