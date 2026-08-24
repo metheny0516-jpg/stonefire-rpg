@@ -50,15 +50,15 @@ export const MAPS = Object.freeze({
 });
 
 export const ENEMIES = Object.freeze({
-  moss: Object.freeze({ name: "コケマル", maxHp: 14, atk: 5, def: 1, exp: 8, color: "#65d26e", behavior: "spore", drops: [{ id: "potion", chance: 0.34 }] }),
-  bat: Object.freeze({ name: "ヨルハネ", maxHp: 21, atk: 7, def: 2, exp: 12, color: "#a881e6", behavior: "swift", drops: [{ id: "nightFeather", chance: 0.38 }] }),
-  boss: Object.freeze({ name: "焔角のガルド", maxHp: 72, atk: 12, def: 4, exp: 50, color: "#e4563b", boss: true, behavior: "fireBoss", drops: [{ id: "flameHorn", chance: 1 }] }),
-  wisp: Object.freeze({ name: "月燐", maxHp: 42, atk: 11, def: 4, exp: 20, color: "#9fe8ff", behavior: "drain", drops: [{ id: "moonDrop", chance: 0.32 }] }),
-  wolf: Object.freeze({ name: "影牙", maxHp: 58, atk: 13, def: 6, exp: 27, color: "#a885e8", behavior: "charge", drops: [{ id: "shadowFang", chance: 0.36 }] }),
-  boss2: Object.freeze({ name: "月蝕のヴァルグ", maxHp: 180, atk: 18, def: 9, exp: 105, color: "#bd5cff", boss: true, behavior: "eclipseBoss", drops: [{ id: "eclipseWing", chance: 1 }] }),
-  golum: Object.freeze({ name: "晶殻のゴルム", maxHp: 82, atk: 17, def: 10, exp: 40, color: "#6ee7ff", behavior: "crystal", drops: [{ id: "skyCrystal", chance: 0.35 }] }),
-  zepha: Object.freeze({ name: "風喰いゼファ", maxHp: 70, atk: 19, def: 7, exp: 43, color: "#55e0c6", behavior: "gale", drops: [{ id: "windSilk", chance: 0.35 }] }),
-  boss3: Object.freeze({ name: "天穿のオルディア", maxHp: 260, atk: 23, def: 12, exp: 175, color: "#64dcff", boss: true, behavior: "astralBoss", drops: [{ id: "astralCore", chance: 1 }] }),
+  moss: Object.freeze({ name: "コケマル", maxHp: 18, atk: 6, def: 1, exp: 10, gold: 6, color: "#65d26e", behavior: "spore", drops: [{ id: "potion", chance: 0.34 }] }),
+  bat: Object.freeze({ name: "ヨルハネ", maxHp: 26, atk: 9, def: 2, exp: 14, gold: 9, color: "#a881e6", behavior: "swift", drops: [{ id: "nightFeather", chance: 0.38 }] }),
+  boss: Object.freeze({ name: "焔角のガルド", maxHp: 92, atk: 15, def: 5, exp: 60, gold: 60, color: "#e4563b", boss: true, behavior: "fireBoss", drops: [{ id: "flameHorn", chance: 1 }] }),
+  wisp: Object.freeze({ name: "月燐", maxHp: 54, atk: 14, def: 5, exp: 26, gold: 16, color: "#9fe8ff", behavior: "drain", drops: [{ id: "moonDrop", chance: 0.32 }] }),
+  wolf: Object.freeze({ name: "影牙", maxHp: 72, atk: 17, def: 7, exp: 34, gold: 22, color: "#a885e8", behavior: "charge", drops: [{ id: "shadowFang", chance: 0.36 }] }),
+  boss2: Object.freeze({ name: "月蝕のヴァルグ", maxHp: 225, atk: 23, def: 11, exp: 125, gold: 150, color: "#bd5cff", boss: true, behavior: "eclipseBoss", drops: [{ id: "eclipseWing", chance: 1 }] }),
+  golum: Object.freeze({ name: "晶殻のゴルム", maxHp: 105, atk: 22, def: 12, exp: 50, gold: 30, color: "#6ee7ff", behavior: "crystal", drops: [{ id: "skyCrystal", chance: 0.35 }] }),
+  zepha: Object.freeze({ name: "風喰いゼファ", maxHp: 88, atk: 24, def: 8, exp: 54, gold: 32, color: "#55e0c6", behavior: "gale", drops: [{ id: "windSilk", chance: 0.35 }] }),
+  boss3: Object.freeze({ name: "天穿のオルディア", maxHp: 330, atk: 30, def: 15, exp: 210, gold: 300, color: "#64dcff", boss: true, behavior: "astralBoss", drops: [{ id: "astralCore", chance: 1 }] }),
 });
 
 export const ENCOUNTERS = Object.freeze({
