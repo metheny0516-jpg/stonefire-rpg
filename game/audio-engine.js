@@ -1,29 +1,39 @@
 const BGM_VOLUME = 0.24;
 const SE_VOLUME = 0.78;
-const STEP_SECONDS = 60 / 150 / 4;
+const STEP_SECONDS = 60 / 162 / 4;
 const BOSS_STEP_SECONDS = 60 / 172 / 4;
-const BATTLE_STEPS = 32 * 16;
+const BATTLE_STEPS = 16 * 16;
 const CROSSFADE = 0.6;
 
-const CHORDS = Object.freeze([
-  [45, 52, 57], [43, 50, 55], [41, 48, 53], [43, 50, 55],
-  [45, 52, 57], [48, 55, 60], [41, 48, 53], [43, 50, 55],
-  [50, 57, 62], [48, 55, 60], [45, 52, 57], [43, 50, 55],
-  [41, 48, 53], [43, 50, 55], [45, 52, 57], [45, 52, 57],
-  [41, 48, 53], [45, 52, 57], [48, 55, 60], [50, 57, 62],
-  [46, 53, 58], [48, 55, 60], [43, 50, 55], [45, 52, 57],
-  [45, 52, 57], [43, 50, 55], [41, 48, 53], [48, 55, 60],
-  [50, 57, 62], [43, 50, 55], [41, 48, 53], [45, 52, 57],
-]);
+// ==================== 通常戦闘 (162BPM / 16小節) ====================
+// 16小節を2小節ずつ8スロットに分け、章ごとに和音と旋律を丸ごと差し替える。
+const BATTLE_SECTIONS = Object.freeze(["A", "A", "B", "A", "A", "B", "B", "C"]);
+const BATTLE_BASS = Object.freeze([0, 0, 7, 0, 12, 0, 7, 5]);
+const BATTLE_KICKS = Object.freeze([0, 6, 8, 14]);
 
-const MELODIES = Object.freeze({
-  A: [69, 72, 74, 76, 77, 76, 74, 72, 69, 72, 76, 79, 77, 76, 74, 72],
-  AP: [69, 72, 74, 76, 81, 79, 77, 76, 74, 76, 77, 81, 79, 77, 76, 74],
-  B: [77, 79, 81, 84, 81, 79, 77, 76, 74, 77, 81, 79, 77, 74, 72, 74],
-  BUILD: [72, 74, 76, 77, 79, 81, 83, 84, 81, 79, 77, 76, 74, 76, 77, 79],
+const BATTLE_SETS = Object.freeze({
+  // 第1章「石牢」: Eマイナー、硬く角ばった矩形波
+  1: Object.freeze({
+    chords: [[40, 47, 52], [40, 47, 52], [36, 43, 48], [38, 45, 50], [40, 47, 52], [45, 52, 57], [47, 54, 59], [40, 47, 52]],
+    A: [76, 76, 79, 83, 79, 76, 74, 71, 72, 74, 76, 79, 76, 74, 71, 67],
+    B: [83, 86, 88, 86, 83, 79, 83, 86, 84, 83, 79, 76, 79, 76, 74, 71],
+    lead: "square", counter: "triangle", stab: "sawtooth", drive: 1,
+  }),
+  // 第2章「月影の森」: Dドリアン、三角波のやわらかい疾走
+  2: Object.freeze({
+    chords: [[38, 45, 50], [38, 45, 50], [41, 48, 53], [43, 50, 55], [36, 43, 48], [41, 48, 53], [43, 50, 55], [38, 45, 50]],
+    A: [74, 77, 81, 77, 74, 72, 69, 72, 74, 77, 81, 84, 81, 77, 74, 72],
+    B: [81, 84, 86, 84, 81, 77, 74, 77, 79, 81, 84, 81, 77, 74, 72, 69],
+    lead: "triangle", counter: "sine", stab: "triangle", drive: 0.88,
+  }),
+  // 第3章「星骸の塔」: Aマイナー、高音域の鋸波で切迫感を出す
+  3: Object.freeze({
+    chords: [[45, 52, 57], [45, 52, 57], [43, 50, 55], [41, 48, 53], [38, 45, 50], [43, 50, 55], [40, 47, 52], [45, 52, 57]],
+    A: [81, 84, 88, 84, 81, 79, 76, 79, 81, 84, 88, 91, 88, 84, 81, 79],
+    B: [88, 91, 93, 91, 88, 84, 81, 84, 86, 88, 91, 88, 84, 81, 79, 76],
+    lead: "sawtooth", counter: "triangle", stab: "sawtooth", drive: 1.12,
+  }),
 });
-
-const SECTIONS = Object.freeze(["A", "A", "AP", "AP", "B", "B", "BUILD", "A"]);
 
 // --- 第1章「石牢」: 低く沈んだ短調、水滴の反響 ---
 const F1_CHORDS = Object.freeze([[45, 48, 52], [41, 45, 48], [36, 40, 43], [43, 47, 50]]);
@@ -58,6 +68,12 @@ const BOSS_MELODY = Object.freeze([
   74, 77, 81, 86, 84, 82, 81, 79, 77, 79, 81, 77, 74, 72, 74, 74,
 ]);
 const BOSS_BASS = Object.freeze([0, 0, 12, 0, 7, 0, 12, 5, 0, 0, 12, 7, 5, 7, 3, 0]);
+// ボス曲は章ごとに移調と音色を変えて、同じ曲に聞こえないようにする。
+const BOSS_VARIANTS = Object.freeze({
+  1: Object.freeze({ shift: 0, lead: "sawtooth", bass: "square" }),
+  2: Object.freeze({ shift: -3, lead: "square", bass: "sawtooth" }),
+  3: Object.freeze({ shift: 4, lead: "sawtooth", bass: "square" }),
+});
 
 // --- 勝利/章クリア: 明るいハ長調のループ ---
 const CLEAR_CHORDS = Object.freeze([[48, 55, 64], [53, 60, 69], [50, 57, 65], [55, 62, 71]]);
@@ -88,10 +104,11 @@ export function trackForState(state) {
   if (!state) return "field1";
   if (state.mode === "over") return "over";
   if (state.mode === "clear") return "clear";
-  if (state.mode === "battle") {
-    return (state.enemies || []).some((e) => e && e.boss) || (state.enemy && state.enemy.boss) ? "boss" : "battle";
-  }
   const chapter = Math.max(1, Math.min(3, state.chapter || 1));
+  if (state.mode === "battle") {
+    const boss = (state.enemies || []).some((e) => e && e.boss) || !!(state.enemy && state.enemy.boss);
+    return (boss ? "boss" : "battle") + chapter;
+  }
   return "field" + chapter;
 }
 
@@ -249,66 +266,87 @@ export function createGameAudio({ getState, enabled = true } = {}) {
 
   // ==================== BGM トラック ====================
 
-  function scheduleBattleStep(step, when) {
+  function scheduleBattleStep(step, when, set) {
     if (step < 0) {
+      // 2小節のカウントイン: 下から駆け上がって戦闘へ突入する
       const intro = step + 16;
+      const root = set.chords[0][0];
       if (intro === 0) {
-        kick(when, 0.16);
-        noiseBurst({ duration: 0.3, gain: 0.09, frequency: 850, type: "bandpass", when, bus: bus() });
-        oscillator({ frequency: midi(38), endFrequency: midi(45), duration: 0.45, type: "sawtooth", gain: 0.055, when, bus: bus() });
+        kick(when, 0.17);
+        noiseBurst({ duration: 0.34, gain: 0.1, frequency: 900, type: "bandpass", when, bus: bus() });
+        oscillator({ frequency: midi(root - 12), endFrequency: midi(root), duration: 0.5, type: "sawtooth", gain: 0.06, when, bus: bus() });
       }
-      if ([4, 7, 10, 13].includes(intro)) {
-        const note = [57, 62, 65, 69][[4, 7, 10, 13].indexOf(intro)];
-        oscillator({ frequency: midi(note), endFrequency: midi(note + 2), duration: 0.18, type: "triangle", gain: 0.075, when, bus: bus() });
-        hat(when, intro === 13);
+      if (intro === 8) { kick(when, 0.13); snare(when, 0.07); }
+      if ([10, 12, 14, 15].includes(intro)) {
+        const climb = [0, 3, 7, 10][[10, 12, 14, 15].indexOf(intro)];
+        oscillator({ frequency: midi(root + 24 + climb), duration: 0.11, type: set.lead, gain: 0.055, when, bus: bus() });
+        hat(when, intro === 15);
       }
       return;
     }
-    const loopStep = step % BATTLE_STEPS;
-    const bar = Math.floor(loopStep / 16);
-    const beat = loopStep % 16;
-    const chord = CHORDS[bar];
-    const section = SECTIONS[Math.floor(bar / 4)];
-    const melody = MELODIES[section];
 
-    if (beat === 0 || beat === 8) kick(when, bar >= 24 ? 0.11 : 0.095);
-    if (beat === 4 || beat === 12) snare(when, bar >= 16 ? 0.072 : 0.06);
-    if (beat % 2 === 0) hat(when, beat === 14 && bar % 4 === 3);
-    if (bar >= 24 && beat % 4 === 2) hat(when);
+    const loop = step % BATTLE_STEPS;
+    const bar = Math.floor(loop / 16);      // 0..15
+    const slot = Math.floor(bar / 2);       // 0..7 (2小節ごと)
+    const beat = loop % 16;
+    const chord = set.chords[slot];
+    const section = BATTLE_SECTIONS[slot];
+    const melody = section === "A" ? set.A : set.B;
+    const lift = section === "C" ? 12 : 0;  // 最後の2小節は1オクターブ上げて煽る
+    const dense = section === "C" || slot >= 5;
+    const drive = set.drive;
 
-    if (beat % 2 === 0) {
-      const bassPattern = [0, 0, 7, 0, 12, 7, 0, 7];
-      const note = chord[0] - 12 + bassPattern[beat / 2];
-      oscillator({ frequency: midi(note), endFrequency: midi(note - 1), duration: 0.17, type: "triangle", gain: 0.052, when, bus: bus() });
-      oscillator({ frequency: midi(note - 12), duration: 0.12, type: "sine", gain: 0.027, when, bus: bus() });
+    // --- ドラム ---
+    if (BATTLE_KICKS.includes(beat)) kick(when, (beat === 0 ? 0.115 : 0.092) * drive);
+    if (beat === 4 || beat === 12) snare(when, (dense ? 0.075 : 0.062) * drive);
+    if (beat % 2 === 0) hat(when, beat === 14 && slot % 2 === 1);
+    if (dense && beat % 4 === 3) hat(when, false, 0.6);
+    // 16小節目の締めのフィル
+    if (section === "C" && bar % 2 === 1 && beat >= 8 && beat % 2 === 0) {
+      snare(when, (0.05 + (beat - 8) * 0.008) * drive);
     }
 
-    if (beat % 4 === 0) {
-      chord.forEach((note, index) => oscillator({ frequency: midi(note), endFrequency: midi(note - 0.4), duration: 0.26, type: index === 0 ? "triangle" : "sawtooth", gain: index === 0 ? 0.018 : 0.011, attack: 0.018, when, bus: bus(), detune: index * 3 - 3 }));
+    // --- ベース (8分の刻み + サブ) ---
+    if (beat % 2 === 0) {
+      const note = chord[0] - 12 + BATTLE_BASS[beat / 2];
+      oscillator({ frequency: midi(note), endFrequency: midi(note - 0.6), duration: 0.13, type: "triangle", gain: 0.05 * drive, when, bus: bus() });
+    }
+    if (beat === 0 || beat === 8) oscillator({ frequency: midi(chord[0] - 24), duration: 0.24, type: "sine", gain: 0.03, when, bus: bus() });
+
+    // --- キック位置に合わせたコードの刻み ---
+    if (BATTLE_KICKS.includes(beat)) {
+      [chord[0], chord[1]].forEach((note, i) => oscillator({
+        frequency: midi(note + 12), duration: 0.11, type: set.stab,
+        gain: (0.016 - i * 0.005) * drive, attack: 0.006, when, bus: bus(), detune: i * 7 - 3,
+      }));
     }
 
-    const arpNote = chord[(beat + bar) % chord.length] + 12 + (beat % 4 === 3 ? 12 : 0);
-    oscillator({ frequency: midi(arpNote), duration: 0.075, type: "triangle", gain: 0.018, when, bus: bus() });
+    // --- 裏拍の対旋律 ---
+    if (beat % 4 === 2) {
+      const counterNote = chord[(beat / 2 + slot) % chord.length] + 12;
+      oscillator({ frequency: midi(counterNote), duration: 0.09, type: set.counter, gain: 0.016, when, bus: bus() });
+    }
 
+    // --- 主旋律 (8分音符) ---
     if (beat % 2 === 0) {
-      let melodyNote = melody[(beat / 2 + (bar % 4) * 4) % melody.length];
-      if (bar >= 16 && bar < 24) melodyNote += bar % 2 ? 0 : 5;
-      oscillator({ frequency: midi(melodyNote), endFrequency: midi(melodyNote - 0.35), duration: 0.18, type: "sawtooth", gain: 0.028, attack: 0.012, when, bus: bus() });
-      oscillator({ frequency: midi(melodyNote + 12), duration: 0.11, type: "triangle", gain: 0.012, when: when + 0.006, bus: bus() });
+      const note = melody[((bar % 2) * 8 + beat / 2) % melody.length] + lift;
+      oscillator({ frequency: midi(note), endFrequency: midi(note - 0.3), duration: 0.155, type: set.lead, gain: 0.03 * drive, attack: 0.01, when, bus: bus() });
+      oscillator({ frequency: midi(note), duration: 0.13, type: "triangle", gain: 0.009, when, bus: bus(), detune: 9 });
+      if (dense) oscillator({ frequency: midi(note + 12), duration: 0.085, type: "triangle", gain: 0.011, when: when + 0.007, bus: bus() });
     }
   }
 
-  function scheduleBossStep(step, when) {
+  function scheduleBossStep(step, when, variant) {
     if (step < 0) {
       const intro = step + 12;
       if (intro === 0) {
         kick(when, 0.2);
         noiseBurst({ duration: 0.55, gain: 0.11, frequency: 620, type: "bandpass", when, bus: bus() });
-        oscillator({ frequency: midi(26), endFrequency: midi(38), duration: 0.75, type: "sawtooth", gain: 0.08, when, bus: bus() });
+        oscillator({ frequency: midi(26 + variant.shift), endFrequency: midi(38 + variant.shift), duration: 0.75, type: "sawtooth", gain: 0.08, when, bus: bus() });
       }
       if (intro === 6 || intro === 9) {
         snare(when, 0.09);
-        oscillator({ frequency: midi(50 + (intro - 6) * 2), duration: 0.16, type: "square", gain: 0.05, when, bus: bus() });
+        oscillator({ frequency: midi(50 + variant.shift + (intro - 6) * 2), duration: 0.16, type: "square", gain: 0.05, when, bus: bus() });
       }
       if (intro === 11) {
         noiseBurst({ duration: 0.22, gain: 0.13, frequency: 4200, type: "highpass", when, bus: bus() });
@@ -318,7 +356,7 @@ export function createGameAudio({ getState, enabled = true } = {}) {
     const loop = step % 128;
     const bar = Math.floor(loop / 16);
     const beat = loop % 16;
-    const chord = BOSS_CHORDS[bar];
+    const chord = BOSS_CHORDS[bar].map((n) => n + variant.shift);
     const half = bar >= 4;
 
     // ドラム: 前へ前へと押すパターン
@@ -329,18 +367,18 @@ export function createGameAudio({ getState, enabled = true } = {}) {
 
     // 16分の刻みベース
     const bassNote = chord[0] - 12 + BOSS_BASS[beat];
-    oscillator({ frequency: midi(bassNote), duration: 0.075, type: "square", gain: 0.045, when, bus: bus() });
+    oscillator({ frequency: midi(bassNote), duration: 0.075, type: variant.bass, gain: 0.045, when, bus: bus() });
     if (beat % 4 === 0) oscillator({ frequency: midi(chord[0] - 24), duration: 0.28, type: "sine", gain: 0.05, when, bus: bus() });
 
     // 刻むパワーコード
     if (beat % 2 === 0) {
-      [chord[0], chord[0] + 7].forEach((note, i) => oscillator({ frequency: midi(note), duration: 0.1, type: "sawtooth", gain: 0.017 - i * 0.004, attack: 0.006, when, bus: bus(), detune: i * 6 - 3 }));
+      [chord[0], chord[0] + 7].forEach((note, i) => oscillator({ frequency: midi(note), duration: 0.1, type: variant.lead, gain: 0.017 - i * 0.004, attack: 0.006, when, bus: bus(), detune: i * 6 - 3 }));
     }
 
     // ブラス風の主旋律
-    const melodyNote = BOSS_MELODY[(bar * 8 + Math.floor(beat / 2)) % BOSS_MELODY.length];
+    const melodyNote = BOSS_MELODY[(bar * 8 + Math.floor(beat / 2)) % BOSS_MELODY.length] + variant.shift;
     if (beat % 2 === 0) {
-      oscillator({ frequency: midi(melodyNote), endFrequency: midi(melodyNote - 0.3), duration: 0.16, type: "sawtooth", gain: 0.032, attack: 0.014, when, bus: bus() });
+      oscillator({ frequency: midi(melodyNote), endFrequency: midi(melodyNote - 0.3), duration: 0.16, type: variant.lead, gain: 0.032, attack: 0.014, when, bus: bus() });
       oscillator({ frequency: midi(melodyNote), duration: 0.14, type: "square", gain: 0.012, when, bus: bus(), detune: 8 });
       if (half) oscillator({ frequency: midi(melodyNote + 12), duration: 0.1, type: "triangle", gain: 0.014, when: when + 0.008, bus: bus() });
     }
@@ -462,11 +500,16 @@ export function createGameAudio({ getState, enabled = true } = {}) {
     field1: { step: 0.21, verb: 0.34, intro: 0, schedule: (s, w) => scheduleFieldStep(s, w, { name: "field1", chords: F1_CHORDS, melody: F1_MELODY }) },
     field2: { step: 0.19, verb: 0.2, intro: 0, schedule: (s, w) => scheduleFieldStep(s, w, { name: "field2", chords: F2_CHORDS, melody: F2_MELODY }) },
     field3: { step: 0.22, verb: 0.3, intro: 0, schedule: (s, w) => scheduleFieldStep(s, w, { name: "field3", chords: F3_CHORDS, melody: F3_MELODY }) },
-    battle: { step: STEP_SECONDS, verb: 0.12, intro: -16, schedule: scheduleBattleStep },
-    boss: { step: BOSS_STEP_SECONDS, verb: 0.1, intro: -12, schedule: scheduleBossStep },
     clear: { step: 0.15, verb: 0.22, intro: 0, schedule: scheduleClearStep },
     over: { step: 0.34, verb: 0.42, intro: 0, schedule: scheduleOverStep },
   };
+  // 章ごとの通常戦闘曲とボス曲を組み立てる
+  [1, 2, 3].forEach((chapter) => {
+    const set = BATTLE_SETS[chapter];
+    const variant = BOSS_VARIANTS[chapter];
+    TRACKS["battle" + chapter] = { step: STEP_SECONDS, verb: 0.12, intro: -16, schedule: (s, w) => scheduleBattleStep(s, w, set) };
+    TRACKS["boss" + chapter] = { step: BOSS_STEP_SECONDS, verb: 0.1, intro: -12, schedule: (s, w) => scheduleBossStep(s, w, variant) };
+  });
 
   function switchTrack(name, { restart = false } = {}) {
     if (!ensure()) return;
@@ -503,8 +546,8 @@ export function createGameAudio({ getState, enabled = true } = {}) {
   function startBattle() {
     if (!ensure()) return;
     const desired = trackForState(getState && getState());
-    switchTrack(desired === "boss" ? "boss" : "battle", { restart: true });
-    sfx(desired === "boss" ? "bossAppear" : "battleStart");
+    switchTrack(desired, { restart: true });
+    sfx(desired.startsWith("boss") ? "bossAppear" : "battleStart");
   }
 
   // ==================== 効果音 ====================
@@ -724,11 +767,11 @@ export function createGameAudio({ getState, enabled = true } = {}) {
 }
 
 export const AUDIO_DESIGN = Object.freeze({
-  bpm: 150,
+  bpm: 162,
   bossBpm: 172,
-  battleBars: 32,
+  battleBars: 16,
   battleDurationSeconds: BATTLE_STEPS * STEP_SECONDS,
   bgmVolume: BGM_VOLUME,
   seVolume: SE_VOLUME,
-  tracks: ["field1", "field2", "field3", "battle", "boss", "clear", "over"],
+  tracks: ["field1", "field2", "field3", "battle1", "battle2", "battle3", "boss1", "boss2", "boss3", "clear", "over"],
 });

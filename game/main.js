@@ -1,7 +1,7 @@
 import { ASSETS, BOSSES, ENCOUNTERS, ENEMIES, ITEMS, MAPS, SKILLS, TILE_SIZE } from './content.js';
 import { criticalRateForLevel, effectiveDefense, resolveHeroAttack, rollDrops, rollEncounterGroup, selectEnemyAction, sparkChanceForAction } from './battle-rules.js';
 import { clearStoredSave, readStoredSave, SAVE_VERSION, writeStoredSave } from './save-store.js';
-import { createGameAudio } from './audio-engine.js?v=29-audio3';
+import { createGameAudio } from './audio-engine.js?v=30-battle';
 (()=>{'use strict';const C=document.querySelector('#game'),X=C.getContext('2d'),W=C.width,H=C.height,$=s=>document.querySelector(s),wrap=$('#screenWrap'),battleHeroImg=new Image(),battleHeroCut=document.createElement('canvas'),mageBattleImg=new Image(),mageBattleCut=document.createElement('canvas'),battleHeroFrames=[],mageBattleFrames=[],enemyCuts={},enemyReady={},fieldSprites={},fieldReady={},AUDIO_KEY='stonefire-audio-v1',T=TILE_SIZE,enemies=ENEMIES;let battleHeroReady=false,mageBattleReady=false,audioOn=true,gameAudio=null;try{audioOn=localStorage.getItem(AUDIO_KEY)!=='off'}catch(_){}X.imageSmoothingEnabled=false;
 let state;
 const BATTLE_EFFECTS=Object.freeze({
