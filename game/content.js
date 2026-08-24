@@ -119,20 +119,20 @@ export const TOWNS = Object.freeze({
 // 装備。slot: weapon(武器) / armor(体防具)。owner: hero=ルカ mage=ミナ both=共用
 export const EQUIPMENT = Object.freeze({
   rustSword: Object.freeze({ name: "欠けた剣", slot: "weapon", owner: "hero", atk: 1, price: 30, chapter: 1, icon: "†", desc: "刃こぼれした旅立ちの剣" }),
-  ironSword: Object.freeze({ name: "鉄の剣", slot: "weapon", owner: "hero", atk: 4, price: 120, chapter: 1, icon: "†", desc: "里の鍛冶が打った実直な剣" }),
-  flameEdge: Object.freeze({ name: "焔紋の剣", slot: "weapon", owner: "hero", atk: 8, price: 320, chapter: 2, icon: "†", desc: "刃に焔角の紋が走る" }),
-  moonEdge: Object.freeze({ name: "月光の刃", slot: "weapon", owner: "hero", atk: 13, price: 620, chapter: 2, icon: "†", desc: "月の光を溜めて斬る" }),
-  astralEdge: Object.freeze({ name: "天穿の剣", slot: "weapon", owner: "hero", atk: 19, price: 1100, chapter: 3, icon: "†", desc: "星をも裂くと謳われた剣" }),
+  ironSword: Object.freeze({ name: "鉄の剣", slot: "weapon", owner: "hero", atk: 4, price: 120, chapter: 1, icon: "†", desc: "里の鍛冶が打った実直な剣" , tint: "#d3dcea"}),
+  flameEdge: Object.freeze({ name: "焔紋の剣", slot: "weapon", owner: "hero", atk: 8, price: 320, chapter: 2, icon: "†", desc: "刃に焔角の紋が走る" , tint: "#ff9752"}),
+  moonEdge: Object.freeze({ name: "月光の刃", slot: "weapon", owner: "hero", atk: 13, price: 620, chapter: 2, icon: "†", desc: "月の光を溜めて斬る" , tint: "#bfe6ff"}),
+  astralEdge: Object.freeze({ name: "天穿の剣", slot: "weapon", owner: "hero", atk: 19, price: 1100, chapter: 3, icon: "†", desc: "星をも裂くと謳われた剣" , tint: "#8ef2e4"}),
   oakStaff: Object.freeze({ name: "樫の杖", slot: "weapon", owner: "mage", atk: 1, price: 30, chapter: 1, icon: "⚚", desc: "使い込まれた見習いの杖" }),
-  moonStaff: Object.freeze({ name: "月銀の杖", slot: "weapon", owner: "mage", atk: 4, price: 130, chapter: 1, icon: "⚚", desc: "月銀を巻いた素直な杖" }),
-  frostStaff: Object.freeze({ name: "氷紋の杖", slot: "weapon", owner: "mage", atk: 8, price: 330, chapter: 2, icon: "⚚", desc: "触れると指先が白く曇る" }),
-  starStaff: Object.freeze({ name: "星詠みの杖", slot: "weapon", owner: "mage", atk: 13, price: 640, chapter: 2, icon: "⚚", desc: "星の巡りを読む古い杖" }),
-  voidStaff: Object.freeze({ name: "天穿の杖", slot: "weapon", owner: "mage", atk: 18, price: 1120, chapter: 3, icon: "⚚", desc: "空の芯に届く力を宿す" }),
+  moonStaff: Object.freeze({ name: "月銀の杖", slot: "weapon", owner: "mage", atk: 4, price: 130, chapter: 1, icon: "⚚", desc: "月銀を巻いた素直な杖" , tint: "#d6e8ff"}),
+  frostStaff: Object.freeze({ name: "氷紋の杖", slot: "weapon", owner: "mage", atk: 8, price: 330, chapter: 2, icon: "⚚", desc: "触れると指先が白く曇る" , tint: "#7fe9ff"}),
+  starStaff: Object.freeze({ name: "星詠みの杖", slot: "weapon", owner: "mage", atk: 13, price: 640, chapter: 2, icon: "⚚", desc: "星の巡りを読む古い杖" , tint: "#ffe08a"}),
+  voidStaff: Object.freeze({ name: "天穿の杖", slot: "weapon", owner: "mage", atk: 18, price: 1120, chapter: 3, icon: "⚚", desc: "空の芯に届く力を宿す" , tint: "#d3a2ff"}),
   clothArmor: Object.freeze({ name: "旅装", slot: "armor", owner: "both", def: 1, price: 30, chapter: 1, icon: "▤", desc: "着慣れた旅の装い" }),
-  leatherArmor: Object.freeze({ name: "革の胸当て", slot: "armor", owner: "both", def: 3, price: 110, chapter: 1, icon: "▤", desc: "軽くて動きを妨げない" }),
-  chainArmor: Object.freeze({ name: "鎖帷子", slot: "armor", owner: "both", def: 6, price: 300, chapter: 2, icon: "▤", desc: "細かな鎖を編んだ胴着" }),
-  moonMail: Object.freeze({ name: "月銀の鎧", slot: "armor", owner: "both", def: 10, price: 600, chapter: 2, icon: "▥", desc: "月光を弾く銀の鎧" }),
-  astralMail: Object.freeze({ name: "天穿の鎧", slot: "armor", owner: "both", def: 15, price: 1050, chapter: 3, icon: "▥", desc: "星屑を鍛え込んだ鎧" }),
+  leatherArmor: Object.freeze({ name: "革の胸当て", slot: "armor", owner: "both", def: 3, price: 110, chapter: 1, icon: "▤", desc: "軽くて動きを妨げない" , tint: "#a8733f"}),
+  chainArmor: Object.freeze({ name: "鎖帷子", slot: "armor", owner: "both", def: 6, price: 300, chapter: 2, icon: "▤", desc: "細かな鎖を編んだ胴着" , tint: "#8d96a8"}),
+  moonMail: Object.freeze({ name: "月銀の鎧", slot: "armor", owner: "both", def: 10, price: 600, chapter: 2, icon: "▥", desc: "月光を弾く銀の鎧" , tint: "#cddaec"}),
+  astralMail: Object.freeze({ name: "天穿の鎧", slot: "armor", owner: "both", def: 15, price: 1050, chapter: 3, icon: "▥", desc: "星屑を鍛え込んだ鎧" , tint: "#79d6e8"}),
 });
 
 export const STARTING_GEAR = Object.freeze({

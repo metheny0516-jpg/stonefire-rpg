@@ -68,6 +68,95 @@ function sfx(kind){if(audioOn)gameAudio?.sfx(kind)}
 function vibrate(pattern){if(audioOn&&navigator.vibrate)try{navigator.vibrate(pattern)}catch(_){}}
 function speak(t){if(!audioOn||!('speechSynthesis'in window))return;try{speechSynthesis.cancel();let u=new SpeechSynthesisUtterance(t),v=speechSynthesis.getVoices().find(x=>x.lang&&x.lang.startsWith('ja'));if(v)u.voice=v;u.lang='ja-JP';u.rate=1.35;u.pitch=1.18;u.volume=.72;speechSynthesis.speak(u)}catch(_){}}
 function loadBattleHero(){battleHeroImg.onload=()=>{battleHeroCut.width=256;battleHeroCut.height=384;let q=battleHeroCut.getContext('2d',{willReadFrequently:true});q.imageSmoothingEnabled=true;q.drawImage(battleHeroImg,0,0,256,384);let im=q.getImageData(0,0,256,384),d=im.data;for(let i=0;i<d.length;i+=4){let r=d[i],g=d[i+1],b=d[i+2],green=g-Math.max(r,b);if(g>120&&green>22){let a=Math.max(0,Math.min(255,255-(green-22)*2.45));d[i+3]=a;if(a<245)d[i+1]=Math.min(g,Math.max(r,b)+18)}}q.putImageData(im,0,0);battleHeroReady=true;draw()};battleHeroImg.src=ASSETS.heroBattle}
+// ===== 装備をスプライトに反映する =====
+// 元絵から「刃(またはミナの杖の魔力光)」と「衣」の領域を自動で見つけ、
+// 装備の色で塗り替えた版をキャッシュして描画に差し替える。
+const SKIN_MASKS=new WeakMap(),SKIN_CACHE=new WeakMap();
+function hexRGB(hex){return[parseInt(hex.slice(1,3),16),parseInt(hex.slice(3,5),16),parseInt(hex.slice(5,7),16)]}
+function spriteMasks(cv,kind){
+ let w=cv.width,h=cv.height,n=w*h,q=cv.getContext('2d',{willReadFrequently:true}),d;
+ try{d=q.getImageData(0,0,w,h).data}catch(_){return{blade:new Uint8Array(n),cloth:new Uint8Array(n)}}
+ let blade=new Uint8Array(n),cloth=new Uint8Array(n),cand=new Uint8Array(n),bright=new Uint8Array(n);
+ for(let i=0;i<n;i++){
+  let o=i*4,r=d[o],g=d[o+1],b=d[o+2];
+  if(d[o+3]<60)continue;
+  let mx=Math.max(r,g,b),mn=Math.min(r,g,b),df=mx-mn,sat=mx?df/mx:0,hue=0;
+  if(df>0){if(mx===r)hue=(60*((g-b)/df)+360)%360;else if(mx===g)hue=60*((b-r)/df)+120;else hue=60*((r-g)/df)+240}
+  if(mx>140&&sat<.35)bright[i]=1;
+  if(kind==='mage'){
+   if(hue>=166&&hue<=214&&sat>.28&&mx>110)blade[i]=1;
+   if(hue>=218&&hue<=286&&sat>.46&&mx>28&&mx<198)cloth[i]=1;
+  }else{
+   if(mx>170&&sat<.22)cand[i]=1;
+   if((hue<20||hue>334)&&sat>.42&&mx>40)cloth[i]=1;
+  }
+ }
+ if(kind!=='mage'){
+  let span=Math.max(w,h),thick=Math.max(5,Math.round(span*.085)),thin=new Uint8Array(n);
+  // 縦横どちらから見ても細い画素だけを刃候補に絞る(盾や白い装飾は太いので落ちる)
+  for(let y=0;y<h;y++){let x=0;while(x<w){if(!cand[y*w+x]){x++;continue}let s0=x;while(x<w&&cand[y*w+x])x++;if(x-s0<=thick)for(let k=s0;k<x;k++)thin[y*w+k]|=1}}
+  for(let x=0;x<w;x++){let y=0;while(y<h){if(!cand[y*w+x]){y++;continue}let s0=y;while(y<h&&cand[y*w+x])y++;if(y-s0<=thick)for(let k=s0;k<y;k++)thin[k*w+x]|=2}}
+  for(let i=0;i<n;i++)cand[i]=thin[i]===3?1:0;
+  // 残った中から、細長い連結成分だけを刃とみなす
+  let lab=new Int32Array(n),stack=new Int32Array(n);
+  for(let i=0;i<n;i++){
+   if(!cand[i]||lab[i])continue;
+   let id=i+1,top=0,count=0,minX=w,maxX=0,minY=h,maxY=0,members=[];
+   stack[top++]=i;lab[i]=id;
+   while(top){
+    let p=stack[--top],x=p%w,y=(p-x)/w;members.push(p);count++;
+    if(x<minX)minX=x;if(x>maxX)maxX=x;if(y<minY)minY=y;if(y>maxY)maxY=y;
+    for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){
+     let nx=x+dx,ny=y+dy;if(nx<0||ny<0||nx>=w||ny>=h)continue;
+     let t=ny*w+nx;if(cand[t]&&!lab[t]){lab[t]=id;stack[top++]=t}}
+   }
+   let bw=maxX-minX+1,bh=maxY-minY+1,fill=count/(bw*bh),diag=Math.hypot(bw,bh);
+   if(count>=Math.max(24,span*.1)&&fill<.32&&diag>span*.28)for(let p of members)blade[p]=1;
+  }
+ }
+ // 縁のアンチエイリアスを1px拾って境目のギザつきを抑える
+ let grown=blade.slice();
+ for(let y=0;y<h;y++)for(let x=0;x<w;x++){
+  let i=y*w+x;if(blade[i])continue;
+  if(!bright[i])continue;
+  if((x>0&&blade[i-1])||(x<w-1&&blade[i+1])||(y>0&&blade[i-w])||(y<h-1&&blade[i+w]))grown[i]=1;
+ }
+ // 元の陰影を保ちつつ、装備の色そのものの明るさに寄せるための基準値
+ let bl=0,bn=0,cl=0,cn=0;
+ for(let i=0;i<n;i++){let o=i*4;if(d[o+3]<60)continue;let lum=(d[o]*.32+d[o+1]*.5+d[o+2]*.18)/255;
+  if(grown[i]){bl+=lum;bn++}else if(cloth[i]){cl+=lum;cn++}}
+ return{blade:grown,cloth,bladeMean:bn?bl/bn:.5,clothMean:cn?cl/cn:.5}
+}
+function tintSprite(cv,masks,bladeHex,clothHex){
+ let w=cv.width,h=cv.height,out=document.createElement('canvas');out.width=w;out.height=h;
+ let q=out.getContext('2d',{willReadFrequently:true});q.drawImage(cv,0,0);
+ let im,bc=bladeHex&&hexRGB(bladeHex),cc=clothHex&&hexRGB(clothHex);
+ try{im=q.getImageData(0,0,w,h)}catch(_){return cv}
+ let d=im.data;
+ for(let i=0,n=w*h;i<n;i++){
+  let onBlade=bc&&masks.blade[i],target=onBlade?bc:cc&&masks.cloth[i]?cc:null;
+  if(!target)continue;
+  let o=i*4;if(d[o+3]<20)continue;
+  let lum=(d[o]*.32+d[o+1]*.5+d[o+2]*.18)/255,mean=Math.max(.08,onBlade?masks.bladeMean:masks.clothMean),
+   k=Math.max(.18,Math.min(1.38,.34+(lum/mean)*.72)),hi=Math.max(0,lum-.86)*3;
+  d[o]=Math.min(255,target[0]*k+255*hi);
+  d[o+1]=Math.min(255,target[1]*k+255*hi);
+  d[o+2]=Math.min(255,target[2]*k+255*hi);
+ }
+ q.putImageData(im,0,0);return out;
+}
+function skin(cv,member){
+ if(!cv||!member)return cv;
+ let bladeHex=EQUIPMENT[member.equip?.weapon]?.tint||null,clothHex=EQUIPMENT[member.equip?.armor]?.tint||null;
+ if(!bladeHex&&!clothHex)return cv;
+ let masks=SKIN_MASKS.get(cv);
+ if(!masks){masks=spriteMasks(cv,member===state.companion?'mage':'hero');SKIN_MASKS.set(cv,masks)}
+ let key=(bladeHex||'-')+'|'+(clothHex||'-'),cache=SKIN_CACHE.get(cv);
+ if(!cache){cache=new Map();SKIN_CACHE.set(cv,cache)}
+ let hit=cache.get(key);
+ if(!hit){if(cache.size>=4)cache.delete(cache.keys().next().value);hit=tintSprite(cv,masks,bladeHex,clothHex);cache.set(key,hit)}
+ return hit;
+}
 function chromaCanvas(img,w,h){let c=document.createElement('canvas');c.width=w;c.height=h;let q=c.getContext('2d',{willReadFrequently:true});q.imageSmoothingEnabled=true;q.drawImage(img,0,0,w,h);let im=q.getImageData(0,0,w,h),d=im.data;for(let i=0;i<d.length;i+=4){let r=d[i],g=d[i+1],b=d[i+2],green=g-Math.max(r,b);if(g>110&&green>18){let a=Math.max(0,Math.min(255,255-(green-18)*2.7));d[i+3]=a;if(a<245)d[i+1]=Math.min(g,Math.max(r,b)+15)}}q.putImageData(im,0,0);return c}
 function cropCell(base,sx,sy,sw,sh){let q=base.getContext('2d',{willReadFrequently:true}),im=q.getImageData(sx,sy,sw,sh),d=im.data,minX=sw,minY=sh,maxX=0,maxY=0;for(let y=0;y<sh;y++)for(let x=0;x<sw;x++)if(d[(y*sw+x)*4+3]>35){minX=Math.min(minX,x);minY=Math.min(minY,y);maxX=Math.max(maxX,x);maxY=Math.max(maxY,y)}if(minX>maxX)return base;let pad=4,w=maxX-minX+1,h=maxY-minY+1,c=document.createElement('canvas');c.width=w+pad*2;c.height=h+pad*2;c.getContext('2d').drawImage(base,sx+minX,sy+minY,w,h,pad,pad,w,h);return c}
 function loadBattleSheet(src,frames,onReady){let img=new Image();img.onload=()=>{let base=chromaCanvas(img,768,512),cw=256,ch=256;frames.length=0;for(let i=0;i<6;i++)frames.push(cropCell(base,(i%3)*cw,Math.floor(i/3)*ch,cw,ch));onReady();draw()};img.onerror=onReady;img.src=src}
@@ -377,7 +466,7 @@ function drawTorch(px,py,n){let flick=(state.steps+n)%2;X.fillStyle='#151922';X.
 function drawEntrance(px,py){X.fillStyle='#0a1019';X.fillRect(px+2,py+2,16,18);X.fillStyle='#65758c';X.fillRect(px+2,py+2,3,18);X.fillRect(px+15,py+2,3,18);X.fillRect(px+5,py+1,10,3);X.fillStyle='#8aa8bf';X.fillRect(px+5,py+4,10,1);X.fillStyle='#57c7ff';X.fillRect(px+7,py+7,6,2);X.fillStyle='#dff8ff';X.fillRect(px+9,py+7,2,2)}
 function drawStoneRestoration(px,py){let f=state.steps%2;X.fillStyle='#111827';X.fillRect(px+1,py+1,18,18);X.fillStyle='#59657a';X.fillRect(px+3,py+13,14,5);X.fillStyle='#8895aa';X.fillRect(px+5,py+10,10,4);X.fillStyle='#ffb43e';X.fillRect(px+7+f,py+4,7,7);X.fillStyle='#ffe184';X.fillRect(px+9,py+2+f,4,8);X.fillStyle='#fff8c7';X.fillRect(px+10,py+6,2,4);X.strokeStyle='#e8bd62';X.strokeRect(px+1.5,py+1.5,17,17)}
 function drawBossMarker(px,py){X.fillStyle='#360d16';X.fillRect(px+1,py+1,18,18);X.fillStyle='#7c1e23';X.fillRect(px+3,py+3,14,14);X.fillStyle='#dd4933';X.fillRect(px+5,py+5,10,10);X.fillStyle='#ffb33d';X.fillRect(px+7,py+3,2,5);X.fillRect(px+12,py+3,2,5);X.fillStyle='#fff0a6';X.fillRect(px+8,py+8,2,2);X.fillRect(px+12,py+8,2,2);X.fillStyle='#401019';X.fillRect(px+8,py+13,6,2);X.strokeStyle='#ff6a38';X.lineWidth=1;X.strokeRect(px+1.5,py+1.5,17,17)}
-function drawFieldSprite(key,px,py,dir='down',frame=0,alive=true){let sprite=fieldSprites[key]?.[dir]||fieldSprites[key]?.down;if(!sprite)return false;let bob=frame===1||frame===3?-2:0,tilt=frame===1?-.035:frame===3?.035:0,h=key==='luka'?39:36,w=h*sprite.width/sprite.height;if(w>34){h*=34/w;w=34}X.save();X.globalAlpha=alive?1:.42;X.translate(Math.round(px),Math.round(py+12+bob));X.rotate(tilt);X.fillStyle='#02050a88';X.beginPath();X.ellipse(0,1,Math.min(12,w*.36),3,0,0,Math.PI*2);X.fill();X.imageSmoothingEnabled=true;X.drawImage(sprite,-w/2,-h+2,w,h);X.imageSmoothingEnabled=false;X.restore();return true}
+function drawFieldSprite(key,px,py,dir='down',frame=0,alive=true){let sprite=fieldSprites[key]?.[dir]||fieldSprites[key]?.down;if(!sprite)return false;sprite=skin(sprite,key==='mina'?state.companion:state.hero);let bob=frame===1||frame===3?-2:0,tilt=frame===1?-.035:frame===3?.035:0,h=key==='luka'?39:36,w=h*sprite.width/sprite.height;if(w>34){h*=34/w;w=34}X.save();X.globalAlpha=alive?1:.42;X.translate(Math.round(px),Math.round(py+12+bob));X.rotate(tilt);X.fillStyle='#02050a88';X.beginPath();X.ellipse(0,1,Math.min(12,w*.36),3,0,0,Math.PI*2);X.fill();X.imageSmoothingEnabled=true;X.drawImage(sprite,-w/2,-h+2,w,h);X.imageSmoothingEnabled=false;X.restore();return true}
 function drawFieldCompanion(px,py,dir='down',frame=0){if(drawFieldSprite('mina',px,py,dir,frame,state.companion.hp>0))return;X.save();X.translate(Math.round(px),Math.round(py));let bob=frame===1||frame===3?-1:0;X.fillStyle='#05081799';X.fillRect(-8,9,16,3);X.fillStyle='#6e70d9';X.fillRect(-7,-8+bob,14,18);X.fillStyle='#252b72';X.fillRect(-9,0+bob,18,12);X.fillStyle='#e6d6bd';X.fillRect(-5,-3+bob,10,10);X.fillStyle='#9b91ff';X.fillRect(-7,-15+bob,14,10);X.fillStyle='#43d8e8';X.fillRect(-3,-11+bob,2,2);X.fillRect(2,-11+bob,2,2);X.fillStyle='#d9b14c';X.fillRect(8,-13+bob,2,24);X.fillRect(6,-14+bob,6,2);X.restore()}
 function drawFieldHero(px,py,dir='down',frame=0){
   if(drawFieldSprite('luka',px,py,dir,frame,state.hero.hp>0))return;
@@ -446,8 +535,8 @@ function drawHero(px,py,marker=false,battle=false,pose=0){
 }
 function paintBattleHero(cut,x,y,w,h,alpha,angle,scaleX=1,scaleY=1){X.save();X.globalAlpha=alpha;X.translate(x,y);X.rotate(angle);X.scale(scaleX,scaleY);X.imageSmoothingEnabled=true;X.drawImage(cut,-w/2,-h,w,h);X.imageSmoothingEnabled=false;X.restore()}
 function drawHeroAura(x,y,h){let fx=state.criticalFx;if(!fx||fx.phase==='fade')return;let pulse=fx.phase==='charge'?fx.p:1,t=performance.now()/180;X.save();X.globalCompositeOperation='lighter';for(let i=0;i<3;i++){X.strokeStyle='rgba(255,'+(180+i*25)+','+(55+i*45)+','+(.25+pulse*.2)+')';X.lineWidth=4-i;X.beginPath();X.ellipse(x,y-h*.46,24+pulse*20+i*7,46+pulse*24+i*8,t+i,0,Math.PI*2);X.stroke()}for(let i=0;i<9;i++){let a=t+i*2.399,rr=25+pulse*35+(i%3)*8;X.fillStyle=i%2?'#fff6b0':'#ff9d31';X.fillRect(x+Math.cos(a)*rr,y-h*.48+Math.sin(a)*rr,2+(i%3),2+(i%3))}X.restore()}
-function drawBattleHero(){let party=state.companion.active,baseX=party?49:69,h=party?145:166,idle=state.busy?0:Math.sin(performance.now()/310),x=baseX+(state.heroLunge||0)+(state.heroHit?(-5+idle*2):0),y=193+(state.heroLift||0)+idle*1.5;if(!battleHeroReady){drawHero(x,y-33,false,true,state.battlePose||0);return}let pose=state.battlePose||0,cut=battleHeroFrames[pose]||battleHeroFrames[0]||battleHeroCut,w=h*cut.width/cut.height;if(w>158){h*=158/w;w=158}let angle=([0,-.025,-.045,.07,.035,-.02][pose]||0)+(state.heroHit?-.08:idle*.006),stretch=state.heroStretch||1,scaleX=(pose===3?1.04:1)*stretch,scaleY=(2-stretch)*(1+idle*.006),alpha=state.hero.hp>0?1:.35;drawHeroAura(x,y,h);let trail=state.heroAfterimage||0;if(trail>0)for(let i=4;i>=1;i--){let age=i/4;paintBattleHero(cut,x-(12+i*13)*trail,y+i*.8,w,h,trail*(.34-age*.055),angle,scaleX*(1-age*.025),scaleY*(1-age*.025))}paintBattleHero(cut,x,y,w,h,alpha,angle,scaleX,scaleY)}
-function drawBattleMage(){if(!state.companion.active)return;let cast=state.mageCast||0,idle=state.busy?0:Math.sin(performance.now()/360+1.7),x=111+(state.mageLunge||0)+cast*12+(state.mageHit?-5:0),bottom=190+(state.mageLift||0)-cast*9+idle*1.6,h=132+cast*8;if(!mageBattleReady){drawFieldCompanion(x,bottom-18,'right',cast>.4?1:0);return}let frame=state.mageFrame||0,cut=mageBattleFrames[frame]||mageBattleFrames[0]||mageBattleCut,w=h*cut.width/cut.height;if(w>128){h*=128/w;w=128}X.save();X.globalAlpha=state.companion.hp>0?1:.35;X.translate(x,bottom);X.rotate(-cast*.045+idle*.006-(state.mageHit?.07:0)+(state.mageStaffStrike||0)*.16);X.fillStyle='#0008';X.beginPath();X.ellipse(0,3,w*.32,7,0,0,Math.PI*2);X.fill();if(cast>.05){X.globalCompositeOperation='lighter';X.strokeStyle='rgba(146,225,255,'+(.3+cast*.5)+')';X.lineWidth=2;X.beginPath();X.ellipse(0,-h*.55,18+cast*25,7+cast*8,(state.mageSpin||0)*5,0,Math.PI*2);X.stroke();X.globalCompositeOperation='source-over'}X.imageSmoothingEnabled=true;X.drawImage(cut,-w/2,-h,w,h);X.imageSmoothingEnabled=false;X.restore();drawStaffImpact()}
+function drawBattleHero(){let party=state.companion.active,baseX=party?49:69,h=party?145:166,idle=state.busy?0:Math.sin(performance.now()/310),x=baseX+(state.heroLunge||0)+(state.heroHit?(-5+idle*2):0),y=193+(state.heroLift||0)+idle*1.5;if(!battleHeroReady){drawHero(x,y-33,false,true,state.battlePose||0);return}let pose=state.battlePose||0,cut=skin(battleHeroFrames[pose]||battleHeroFrames[0]||battleHeroCut,state.hero),w=h*cut.width/cut.height;if(w>158){h*=158/w;w=158}let angle=([0,-.025,-.045,.07,.035,-.02][pose]||0)+(state.heroHit?-.08:idle*.006),stretch=state.heroStretch||1,scaleX=(pose===3?1.04:1)*stretch,scaleY=(2-stretch)*(1+idle*.006),alpha=state.hero.hp>0?1:.35;drawHeroAura(x,y,h);let trail=state.heroAfterimage||0;if(trail>0)for(let i=4;i>=1;i--){let age=i/4;paintBattleHero(cut,x-(12+i*13)*trail,y+i*.8,w,h,trail*(.34-age*.055),angle,scaleX*(1-age*.025),scaleY*(1-age*.025))}paintBattleHero(cut,x,y,w,h,alpha,angle,scaleX,scaleY)}
+function drawBattleMage(){if(!state.companion.active)return;let cast=state.mageCast||0,idle=state.busy?0:Math.sin(performance.now()/360+1.7),x=111+(state.mageLunge||0)+cast*12+(state.mageHit?-5:0),bottom=190+(state.mageLift||0)-cast*9+idle*1.6,h=132+cast*8;if(!mageBattleReady){drawFieldCompanion(x,bottom-18,'right',cast>.4?1:0);return}let frame=state.mageFrame||0,cut=skin(mageBattleFrames[frame]||mageBattleFrames[0]||mageBattleCut,state.companion),w=h*cut.width/cut.height;if(w>128){h*=128/w;w=128}X.save();X.globalAlpha=state.companion.hp>0?1:.35;X.translate(x,bottom);X.rotate(-cast*.045+idle*.006-(state.mageHit?.07:0)+(state.mageStaffStrike||0)*.16);X.fillStyle='#0008';X.beginPath();X.ellipse(0,3,w*.32,7,0,0,Math.PI*2);X.fill();if(cast>.05){X.globalCompositeOperation='lighter';X.strokeStyle='rgba(146,225,255,'+(.3+cast*.5)+')';X.lineWidth=2;X.beginPath();X.ellipse(0,-h*.55,18+cast*25,7+cast*8,(state.mageSpin||0)*5,0,Math.PI*2);X.stroke();X.globalCompositeOperation='source-over'}X.imageSmoothingEnabled=true;X.drawImage(cut,-w/2,-h,w,h);X.imageSmoothingEnabled=false;X.restore();drawStaffImpact()}
 function drawBattleAuras(){let t=performance.now()/150,members=[{m:state.hero,x:state.companion.active?49:69,y:157},{m:state.companion,x:111,y:153}];X.save();X.globalCompositeOperation='lighter';for(let{m,x,y}of members){if(!m||!m.active&&m===state.companion||m.hp<=0)continue;if(m.guarding){for(let i=0;i<3;i++){X.strokeStyle='rgba(90,220,255,'+(.42-i*.1)+')';X.lineWidth=4-i;X.beginPath();X.ellipse(x,y,30+i*6+Math.sin(t+i)*3,57+i*4,0,0,Math.PI*2);X.stroke()}X.fillStyle='#d9fbff';for(let i=0;i<4;i++)X.fillRect(x-22+i*15,y-46+(i%2)*12,3,14)}if(m.charged){for(let i=0;i<12;i++){let a=i*2.399+t,rr=18+(i%4)*8,yy=y+40-((t*9+i*17)%105);X.fillStyle=i%2?'#fff0a3':'#ff65e6';X.fillRect(x+Math.cos(a)*rr,yy,2+i%3,5+i%4)}X.strokeStyle='rgba(255,111,236,.55)';X.lineWidth=4;X.beginPath();X.ellipse(x,y+35,28+Math.sin(t)*5,8,0,0,Math.PI*2);X.stroke()}}X.restore()}
 function drawBattleMotionFx(){let fx=state.enemyAttackFx,hit=state.enemyHitFx;if(fx){let p=fx.p,alpha=Math.sin(Math.PI*p);X.save();X.globalCompositeOperation='lighter';for(let i=0;i<11;i++){let y=55+i*13+(i%2)*5,len=35+(i%4)*12;X.strokeStyle=fx.type==='drain'?'rgba(186,90,255,'+alpha+')':fx.type==='savage'?'rgba(255,44,28,'+alpha+')':'rgba(255,119,72,'+alpha+')';X.lineWidth=1+i%3;X.beginPath();X.moveTo(316-p*120,y);X.lineTo(316-p*120-len,y+8);X.stroke()}if(fx.type==='all'){X.fillStyle='rgba(180,75,255,'+(alpha*.18)+')';X.fillRect(0,0,W,H)}if(fx.type==='savage'){X.fillStyle='rgba(255,30,20,'+(alpha*.3)+')';X.fillRect(0,0,W,H);X.globalCompositeOperation='source-over';X.globalAlpha=Math.min(1,p*6)*Math.min(1,(1-p)*4);X.fillStyle='#1a0407ee';X.fillRect(74,52,172,30);X.strokeStyle='#ff5a4a';X.lineWidth=3;X.strokeRect(75.5,53.5,169,27);X.textAlign='center';X.fillStyle='#ffd7cf';X.font='bold 17px monospace';X.fillText('痛 恨 の 一 撃',160,73);X.globalAlpha=1;X.globalCompositeOperation='lighter'}X.restore()}if(hit){let p=hit.p,fade=1-p;X.save();X.globalCompositeOperation='lighter';for(let i=0;i<14;i++){let a=i*Math.PI/7+p,rr=10+p*(45+i%3*8);X.strokeStyle=i%2?'rgba(255,255,220,'+fade+')':'rgba(255,91,45,'+fade+')';X.lineWidth=i%3===0?5:2;X.beginPath();X.moveTo(235+Math.cos(a)*10,111+Math.sin(a)*10);X.lineTo(235+Math.cos(a)*rr,111+Math.sin(a)*rr);X.stroke()}X.restore()}if(state.sparkFx){let p=state.sparkFx.p,flash=Math.max(0,1-Math.abs(p-.32)/.24),fade=Math.min(1,p*5)*Math.min(1,(1-p)*5),cx=state.sparkFx.actor==='hero'?(state.companion.active?49:69):111;X.save();X.globalCompositeOperation='lighter';X.fillStyle='rgba(255,255,225,'+(flash*.72)+')';X.fillRect(0,0,W,H);for(let i=0;i<20;i++){let a=i*Math.PI/10+p*2,r=18+p*(95+i%4*8);X.strokeStyle=i%2?'rgba(255,244,91,'+fade+')':'rgba(120,238,255,'+fade+')';X.lineWidth=i%3===0?5:2;X.beginPath();X.moveTo(cx+Math.cos(a)*12,102+Math.sin(a)*12);X.lineTo(cx+Math.cos(a)*r,102+Math.sin(a)*r);X.stroke()}X.globalCompositeOperation='source-over';X.globalAlpha=fade;X.fillStyle='#120b28ed';X.fillRect(62,54,196,53);X.strokeStyle='#fff27a';X.lineWidth=3;X.strokeRect(63.5,55.5,193,50);X.textAlign='center';X.fillStyle='#fff9b0';X.font='bold 22px monospace';X.fillText('閃 き！',160,79);X.fillStyle='#c9f7ff';X.font='bold 14px monospace';X.fillText(state.sparkFx.name,160,99);X.restore()}if(state.battleFlash){X.fillStyle='rgba(255,255,240,'+Math.min(.7,state.battleFlash*.7)+')';X.fillRect(0,0,W,H)}}
 function drawBattle(){let e=state.enemy,visible=(state.enemies?.length?state.enemies:[e]).filter(v=>!v.defeated),others=visible.filter(v=>v!==e),group=visible.length>1,hit=state.enemyHitFx?.p||0,targetScale=(group?.7:1)*(state.enemyScale||1)*(1+Math.sin(Math.PI*hit)*.1),targetX=235+(state.enemyShift||0)+(state.enemyMotion||0)+Math.sin(Math.PI*hit)*24;if(state.chapter===3)drawSkyTowerBattleBackdrop();else if(state.chapter===2)drawForestBattleBackdrop();else drawStoneBattleBackdrop();if(state.battleDim){X.fillStyle='rgba(1,3,9,'+state.battleDim+')';X.fillRect(0,0,W,H)}drawBattleAuras();drawBattleHero();drawBattleMage();others.forEach((foe,i)=>drawEnemy(foe,i?188:285,112,visible.length>2?.5:.6));drawEnemy(e,targetX,112,targetScale);if(group){let bob=Math.sin(performance.now()/220)*3,ty=46+bob;X.save();X.fillStyle='#ffe68a';X.strokeStyle='#7a5410';X.lineWidth=2;X.beginPath();X.moveTo(targetX-9,ty);X.lineTo(targetX+9,ty);X.lineTo(targetX,ty+12);X.closePath();X.fill();X.stroke();X.strokeStyle='rgba(255,230,138,.75)';X.lineWidth=2;X.beginPath();X.ellipse(targetX,168,26,7,0,0,Math.PI*2);X.stroke();X.restore()}if(state.attackFx>0)drawSwordArc(state.attackFx);if(state.criticalFx)drawCriticalFx(state.criticalFx);if(state.skillFx)drawBattleEffectV2(state.skillFx);drawBattleMotionFx();X.fillStyle='#080b13ee';X.fillRect(153,10,157,31);X.strokeStyle=state.chapter===3?'#66dff2':state.chapter===2?'#9f8ac9':'#aab3c4';X.strokeRect(153,10,157,31);X.fillStyle='#fff';X.font=e.name.length>7?'10px monospace':'12px monospace';X.fillText(e.name+(group?'　残'+visible.length:'') ,162,28);X.fillStyle='#371719';X.fillRect(162,34,138,4);X.fillStyle=e.boss?(state.chapter===3?'#55e8ff':state.chapter===2?'#bd5cff':'#f65045'):'#69df79';X.fillRect(162,34,138*e.hp/e.maxHp,4)}
