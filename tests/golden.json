@@ -27,7 +27,7 @@
      "equip": "{\"weapon\":\"rustSword\",\"armor\":\"clothArmor\"}"
     },
     "mina": null,
-    "inv": "{\"potion\":3,\"moonDrop\":0,\"starTonic\":0,\"nightFeather\":0,\"flameHorn\":0,\"shadowFang\":0,\"eclipseWing\":0,\"skyCrystal\":0,\"windSilk\":0,\"astralCore\":0,\"duskBell\":0}",
+    "inv": "{\"potion\":3,\"moonDrop\":0,\"starTonic\":0,\"nightFeather\":0,\"flameHorn\":0,\"shadowFang\":0,\"eclipseWing\":0,\"skyCrystal\":0,\"windSilk\":0,\"astralCore\":0,\"duskBell\":0,\"abyssTonic\":0,\"abyssShard\":0,\"emberCore\":0,\"abyssHeart\":0}",
     "gear": "{\"rustSword\":1,\"oakStaff\":1,\"clothArmor\":2}",
     "flags": "{}",
     "enemies": "",
@@ -68,7 +68,7 @@
      "equip": "{\"weapon\":\"rustSword\",\"armor\":\"clothArmor\"}"
     },
     "mina": null,
-    "inv": "{\"potion\":3,\"moonDrop\":0,\"starTonic\":0,\"nightFeather\":0,\"flameHorn\":0,\"shadowFang\":0,\"eclipseWing\":0,\"skyCrystal\":0,\"windSilk\":0,\"astralCore\":0,\"duskBell\":0}",
+    "inv": "{\"potion\":3,\"moonDrop\":0,\"starTonic\":0,\"nightFeather\":0,\"flameHorn\":0,\"shadowFang\":0,\"eclipseWing\":0,\"skyCrystal\":0,\"windSilk\":0,\"astralCore\":0,\"duskBell\":0,\"abyssTonic\":0,\"abyssShard\":0,\"emberCore\":0,\"abyssHeart\":0}",
     "gear": "{\"rustSword\":1,\"oakStaff\":1,\"clothArmor\":2}",
     "flags": "{}",
     "enemies": "ヨルハネ:26/26",
@@ -109,7 +109,7 @@
      "equip": "{\"weapon\":\"rustSword\",\"armor\":\"clothArmor\"}"
     },
     "mina": null,
-    "inv": "{\"potion\":3,\"moonDrop\":0,\"starTonic\":0,\"nightFeather\":0,\"flameHorn\":0,\"shadowFang\":0,\"eclipseWing\":0,\"skyCrystal\":0,\"windSilk\":0,\"astralCore\":0,\"duskBell\":0}",
+    "inv": "{\"potion\":3,\"moonDrop\":0,\"starTonic\":0,\"nightFeather\":0,\"flameHorn\":0,\"shadowFang\":0,\"eclipseWing\":0,\"skyCrystal\":0,\"windSilk\":0,\"astralCore\":0,\"duskBell\":0,\"abyssTonic\":0,\"abyssShard\":0,\"emberCore\":0,\"abyssHeart\":0}",
     "gear": "{\"rustSword\":1,\"oakStaff\":1,\"clothArmor\":2}",
     "flags": "{}",
     "enemies": "ヨルハネ:26/26",
@@ -150,7 +150,7 @@
      "equip": "{\"weapon\":\"rustSword\",\"armor\":\"clothArmor\"}"
     },
     "mina": null,
-    "inv": "{\"potion\":3,\"moonDrop\":0,\"starTonic\":0,\"nightFeather\":0,\"flameHorn\":0,\"shadowFang\":0,\"eclipseWing\":0,\"skyCrystal\":0,\"windSilk\":0,\"astralCore\":0,\"duskBell\":0}",
+    "inv": "{\"potion\":3,\"moonDrop\":0,\"starTonic\":0,\"nightFeather\":0,\"flameHorn\":0,\"shadowFang\":0,\"eclipseWing\":0,\"skyCrystal\":0,\"windSilk\":0,\"astralCore\":0,\"duskBell\":0,\"abyssTonic\":0,\"abyssShard\":0,\"emberCore\":0,\"abyssHeart\":0}",
     "gear": "{\"rustSword\":1,\"oakStaff\":1,\"clothArmor\":2}",
     "flags": "{}",
     "enemies": "コケマル:15/15,ヨルハネ:21/21",
@@ -191,7 +191,7 @@
      "equip": "{\"weapon\":\"rustSword\",\"armor\":\"clothArmor\"}"
     },
     "mina": null,
-    "inv": "{\"potion\":3,\"moonDrop\":0,\"starTonic\":0,\"nightFeather\":0,\"flameHorn\":0,\"shadowFang\":0,\"eclipseWing\":0,\"skyCrystal\":0,\"windSilk\":0,\"astralCore\":0,\"duskBell\":0}",
+    "inv": "{\"potion\":3,\"moonDrop\":0,\"starTonic\":0,\"nightFeather\":0,\"flameHorn\":0,\"shadowFang\":0,\"eclipseWing\":0,\"skyCrystal\":0,\"windSilk\":0,\"astralCore\":0,\"duskBell\":0,\"abyssTonic\":0,\"abyssShard\":0,\"emberCore\":0,\"abyssHeart\":0}",
     "gear": "{\"rustSword\":1,\"oakStaff\":1,\"clothArmor\":2}",
     "flags": "{}",
     "enemies": "コケマル:10/15,ヨルハネ:21/21",
@@ -232,7 +232,7 @@
      "equip": "{\"weapon\":\"rustSword\",\"armor\":\"clothArmor\"}"
     },
     "mina": null,
-    "inv": "{\"potion\":3,\"moonDrop\":0,\"starTonic\":0,\"nightFeather\":0,\"flameHorn\":0,\"shadowFang\":0,\"eclipseWing\":0,\"skyCrystal\":0,\"windSilk\":0,\"astralCore\":0,\"duskBell\":0}",
+    "inv": "{\"potion\":3,\"moonDrop\":0,\"starTonic\":0,\"nightFeather\":0,\"flameHorn\":0,\"shadowFang\":0,\"eclipseWing\":0,\"skyCrystal\":0,\"windSilk\":0,\"astralCore\":0,\"duskBell\":0,\"abyssTonic\":0,\"abyssShard\":0,\"emberCore\":0,\"abyssHeart\":0}",
     "gear": "{\"rustSword\":1,\"oakStaff\":1,\"clothArmor\":2}",
     "flags": "{}",
     "enemies": "コケマル:10/15,ヨルハネ:21/21",
@@ -273,7 +273,7 @@
      "equip": "{\"weapon\":\"rustSword\",\"armor\":\"clothArmor\"}"
     },
     "mina": null,
-    "inv": "{\"potion\":3,\"moonDrop\":0,\"starTonic\":0,\"nightFeather\":0,\"flameHorn\":0,\"shadowFang\":0,\"eclipseWing\":0,\"skyCrystal\":0,\"windSilk\":0,\"astralCore\":0,\"duskBell\":0}",
+    "inv": "{\"potion\":3,\"moonDrop\":0,\"starTonic\":0,\"nightFeather\":0,\"flameHorn\":0,\"shadowFang\":0,\"eclipseWing\":0,\"skyCrystal\":0,\"windSilk\":0,\"astralCore\":0,\"duskBell\":0,\"abyssTonic\":0,\"abyssShard\":0,\"emberCore\":0,\"abyssHeart\":0}",
     "gear": "{\"rustSword\":1,\"oakStaff\":1,\"clothArmor\":2}",
     "flags": "{}",
     "enemies": "コケマル:10/15,ヨルハネ:21/21",
@@ -314,7 +314,7 @@
      "equip": "{\"weapon\":\"rustSword\",\"armor\":\"clothArmor\"}"
     },
     "mina": null,
-    "inv": "{\"potion\":3,\"moonDrop\":0,\"starTonic\":0,\"nightFeather\":0,\"flameHorn\":0,\"shadowFang\":0,\"eclipseWing\":0,\"skyCrystal\":0,\"windSilk\":0,\"astralCore\":0,\"duskBell\":0}",
+    "inv": "{\"potion\":3,\"moonDrop\":0,\"starTonic\":0,\"nightFeather\":0,\"flameHorn\":0,\"shadowFang\":0,\"eclipseWing\":0,\"skyCrystal\":0,\"windSilk\":0,\"astralCore\":0,\"duskBell\":0,\"abyssTonic\":0,\"abyssShard\":0,\"emberCore\":0,\"abyssHeart\":0}",
     "gear": "{\"rustSword\":1,\"oakStaff\":1,\"clothArmor\":2}",
     "flags": "{}",
     "enemies": "コケマル:10/15,ヨルハネ:21/21",
@@ -355,7 +355,7 @@
      "equip": "{\"weapon\":\"rustSword\",\"armor\":\"clothArmor\"}"
     },
     "mina": null,
-    "inv": "{\"potion\":3,\"moonDrop\":0,\"starTonic\":0,\"nightFeather\":6,\"flameHorn\":0,\"shadowFang\":6,\"eclipseWing\":0,\"skyCrystal\":3,\"windSilk\":3,\"astralCore\":0,\"duskBell\":0}",
+    "inv": "{\"potion\":3,\"moonDrop\":0,\"starTonic\":0,\"nightFeather\":6,\"flameHorn\":0,\"shadowFang\":6,\"eclipseWing\":0,\"skyCrystal\":3,\"windSilk\":3,\"astralCore\":0,\"duskBell\":0,\"abyssTonic\":0,\"abyssShard\":0,\"emberCore\":0,\"abyssHeart\":0}",
     "gear": "{\"rustSword\":1,\"oakStaff\":1,\"clothArmor\":2}",
     "flags": "{}",
     "enemies": "コケマル:10/15,ヨルハネ:21/21",
@@ -396,7 +396,7 @@
      "equip": "{\"weapon\":\"rustSword\",\"armor\":\"clothArmor\"}"
     },
     "mina": null,
-    "inv": "{\"potion\":3,\"moonDrop\":0,\"starTonic\":0,\"nightFeather\":6,\"flameHorn\":0,\"shadowFang\":6,\"eclipseWing\":0,\"skyCrystal\":3,\"windSilk\":3,\"astralCore\":0,\"duskBell\":0}",
+    "inv": "{\"potion\":3,\"moonDrop\":0,\"starTonic\":0,\"nightFeather\":6,\"flameHorn\":0,\"shadowFang\":6,\"eclipseWing\":0,\"skyCrystal\":3,\"windSilk\":3,\"astralCore\":0,\"duskBell\":0,\"abyssTonic\":0,\"abyssShard\":0,\"emberCore\":0,\"abyssHeart\":0}",
     "gear": "{\"rustSword\":1,\"oakStaff\":1,\"clothArmor\":2}",
     "flags": "{}",
     "enemies": "コケマル:10/15,ヨルハネ:21/21",
@@ -437,7 +437,7 @@
      "equip": "{\"weapon\":\"rustSword\",\"armor\":\"clothArmor\"}"
     },
     "mina": null,
-    "inv": "{\"potion\":5,\"moonDrop\":0,\"starTonic\":0,\"nightFeather\":4,\"flameHorn\":0,\"shadowFang\":6,\"eclipseWing\":0,\"skyCrystal\":3,\"windSilk\":3,\"astralCore\":0,\"duskBell\":0}",
+    "inv": "{\"potion\":5,\"moonDrop\":0,\"starTonic\":0,\"nightFeather\":4,\"flameHorn\":0,\"shadowFang\":6,\"eclipseWing\":0,\"skyCrystal\":3,\"windSilk\":3,\"astralCore\":0,\"duskBell\":0,\"abyssTonic\":0,\"abyssShard\":0,\"emberCore\":0,\"abyssHeart\":0}",
     "gear": "{\"rustSword\":1,\"oakStaff\":1,\"clothArmor\":2}",
     "flags": "{}",
     "enemies": "コケマル:10/15,ヨルハネ:21/21",
@@ -478,7 +478,7 @@
      "equip": "{\"weapon\":\"rustSword\",\"armor\":\"clothArmor\"}"
     },
     "mina": null,
-    "inv": "{\"potion\":6,\"moonDrop\":0,\"starTonic\":0,\"nightFeather\":4,\"flameHorn\":0,\"shadowFang\":6,\"eclipseWing\":0,\"skyCrystal\":3,\"windSilk\":3,\"astralCore\":0,\"duskBell\":0}",
+    "inv": "{\"potion\":6,\"moonDrop\":0,\"starTonic\":0,\"nightFeather\":4,\"flameHorn\":0,\"shadowFang\":6,\"eclipseWing\":0,\"skyCrystal\":3,\"windSilk\":3,\"astralCore\":0,\"duskBell\":0,\"abyssTonic\":0,\"abyssShard\":0,\"emberCore\":0,\"abyssHeart\":0}",
     "gear": "{\"rustSword\":1,\"oakStaff\":1,\"clothArmor\":2}",
     "flags": "{}",
     "enemies": "コケマル:10/15,ヨルハネ:21/21",
@@ -519,7 +519,7 @@
      "equip": "{\"weapon\":\"rustSword\",\"armor\":\"clothArmor\"}"
     },
     "mina": null,
-    "inv": "{\"potion\":6,\"moonDrop\":0,\"starTonic\":0,\"nightFeather\":3,\"flameHorn\":0,\"shadowFang\":6,\"eclipseWing\":0,\"skyCrystal\":3,\"windSilk\":3,\"astralCore\":0,\"duskBell\":0}",
+    "inv": "{\"potion\":6,\"moonDrop\":0,\"starTonic\":0,\"nightFeather\":3,\"flameHorn\":0,\"shadowFang\":6,\"eclipseWing\":0,\"skyCrystal\":3,\"windSilk\":3,\"astralCore\":0,\"duskBell\":0,\"abyssTonic\":0,\"abyssShard\":0,\"emberCore\":0,\"abyssHeart\":0}",
     "gear": "{\"rustSword\":1,\"oakStaff\":1,\"clothArmor\":2}",
     "flags": "{}",
     "enemies": "コケマル:10/15,ヨルハネ:21/21",
@@ -573,7 +573,7 @@
      "skills": "moonheal",
      "equip": "{\"weapon\":\"oakStaff\",\"armor\":\"clothArmor\"}"
     },
-    "inv": "{\"potion\":6,\"moonDrop\":0,\"starTonic\":0,\"nightFeather\":3,\"flameHorn\":0,\"shadowFang\":6,\"eclipseWing\":0,\"skyCrystal\":3,\"windSilk\":3,\"astralCore\":0,\"duskBell\":0}",
+    "inv": "{\"potion\":6,\"moonDrop\":0,\"starTonic\":0,\"nightFeather\":3,\"flameHorn\":0,\"shadowFang\":6,\"eclipseWing\":0,\"skyCrystal\":3,\"windSilk\":3,\"astralCore\":0,\"duskBell\":0,\"abyssTonic\":0,\"abyssShard\":0,\"emberCore\":0,\"abyssHeart\":0}",
     "gear": "{\"rustSword\":1,\"oakStaff\":1,\"clothArmor\":2}",
     "flags": "{\"maxChapter\":2,\"clearedChapters\":{\"1\":true}}",
     "enemies": "コケマル:10/15,ヨルハネ:21/21",
@@ -627,7 +627,7 @@
      "skills": "moonheal",
      "equip": "{\"weapon\":\"oakStaff\",\"armor\":\"clothArmor\"}"
     },
-    "inv": "{\"potion\":6,\"moonDrop\":0,\"starTonic\":0,\"nightFeather\":3,\"flameHorn\":0,\"shadowFang\":6,\"eclipseWing\":0,\"skyCrystal\":3,\"windSilk\":3,\"astralCore\":0,\"duskBell\":0}",
+    "inv": "{\"potion\":6,\"moonDrop\":0,\"starTonic\":0,\"nightFeather\":3,\"flameHorn\":0,\"shadowFang\":6,\"eclipseWing\":0,\"skyCrystal\":3,\"windSilk\":3,\"astralCore\":0,\"duskBell\":0,\"abyssTonic\":0,\"abyssShard\":0,\"emberCore\":0,\"abyssHeart\":0}",
     "gear": "{\"rustSword\":1,\"oakStaff\":1,\"clothArmor\":2}",
     "flags": "{\"maxChapter\":3,\"clearedChapters\":{\"1\":true,\"2\":true}}",
     "enemies": "",
@@ -681,7 +681,7 @@
      "skills": "moonheal",
      "equip": "{\"weapon\":\"oakStaff\",\"armor\":\"clothArmor\"}"
     },
-    "inv": "{\"potion\":6,\"moonDrop\":0,\"starTonic\":0,\"nightFeather\":3,\"flameHorn\":0,\"shadowFang\":6,\"eclipseWing\":0,\"skyCrystal\":3,\"windSilk\":3,\"astralCore\":0,\"duskBell\":0}",
+    "inv": "{\"potion\":6,\"moonDrop\":0,\"starTonic\":0,\"nightFeather\":3,\"flameHorn\":0,\"shadowFang\":6,\"eclipseWing\":0,\"skyCrystal\":3,\"windSilk\":3,\"astralCore\":0,\"duskBell\":0,\"abyssTonic\":0,\"abyssShard\":0,\"emberCore\":0,\"abyssHeart\":0}",
     "gear": "{\"rustSword\":1,\"oakStaff\":1,\"clothArmor\":2}",
     "flags": "{\"maxChapter\":4,\"clearedChapters\":{\"1\":true,\"2\":true,\"3\":true},\"chests\":{}}",
     "enemies": "",
@@ -735,7 +735,7 @@
      "skills": "moonheal",
      "equip": "{\"weapon\":\"oakStaff\",\"armor\":\"clothArmor\"}"
     },
-    "inv": "{\"potion\":8,\"moonDrop\":0,\"starTonic\":0,\"nightFeather\":3,\"flameHorn\":0,\"shadowFang\":6,\"eclipseWing\":0,\"skyCrystal\":3,\"windSilk\":3,\"astralCore\":0,\"duskBell\":0}",
+    "inv": "{\"potion\":8,\"moonDrop\":0,\"starTonic\":0,\"nightFeather\":3,\"flameHorn\":0,\"shadowFang\":6,\"eclipseWing\":0,\"skyCrystal\":3,\"windSilk\":3,\"astralCore\":0,\"duskBell\":0,\"abyssTonic\":0,\"abyssShard\":0,\"emberCore\":0,\"abyssHeart\":0}",
     "gear": "{\"rustSword\":1,\"oakStaff\":1,\"clothArmor\":2}",
     "flags": "{\"maxChapter\":4,\"clearedChapters\":{\"1\":true,\"2\":true,\"3\":true},\"chests\":{\"4:1:7,3\":true}}",
     "enemies": "",
@@ -789,7 +789,7 @@
      "skills": "moonheal",
      "equip": "{\"weapon\":\"oakStaff\",\"armor\":\"clothArmor\"}"
     },
-    "inv": "{\"potion\":8,\"moonDrop\":0,\"starTonic\":0,\"nightFeather\":3,\"flameHorn\":0,\"shadowFang\":6,\"eclipseWing\":0,\"skyCrystal\":3,\"windSilk\":3,\"astralCore\":0,\"duskBell\":0}",
+    "inv": "{\"potion\":8,\"moonDrop\":0,\"starTonic\":0,\"nightFeather\":3,\"flameHorn\":0,\"shadowFang\":6,\"eclipseWing\":0,\"skyCrystal\":3,\"windSilk\":3,\"astralCore\":0,\"duskBell\":0,\"abyssTonic\":0,\"abyssShard\":0,\"emberCore\":0,\"abyssHeart\":0}",
     "gear": "{\"rustSword\":1,\"oakStaff\":1,\"clothArmor\":2}",
     "flags": "{\"maxChapter\":4,\"clearedChapters\":{\"1\":true,\"2\":true,\"3\":true},\"chests\":{\"4:1:7,3\":true}}",
     "enemies": "",
@@ -843,7 +843,7 @@
      "skills": "moonheal",
      "equip": "{\"weapon\":\"oakStaff\",\"armor\":\"clothArmor\"}"
     },
-    "inv": "{\"potion\":8,\"moonDrop\":0,\"starTonic\":0,\"nightFeather\":3,\"flameHorn\":0,\"shadowFang\":6,\"eclipseWing\":0,\"skyCrystal\":3,\"windSilk\":3,\"astralCore\":0,\"duskBell\":0}",
+    "inv": "{\"potion\":8,\"moonDrop\":0,\"starTonic\":0,\"nightFeather\":3,\"flameHorn\":0,\"shadowFang\":6,\"eclipseWing\":0,\"skyCrystal\":3,\"windSilk\":3,\"astralCore\":0,\"duskBell\":0,\"abyssTonic\":0,\"abyssShard\":0,\"emberCore\":0,\"abyssHeart\":0}",
     "gear": "{\"rustSword\":1,\"oakStaff\":1,\"clothArmor\":2}",
     "flags": "{\"maxChapter\":4,\"clearedChapters\":{\"1\":true,\"2\":true,\"3\":true},\"chests\":{\"4:1:7,3\":true}}",
     "enemies": "",
@@ -897,7 +897,7 @@
      "skills": "moonheal",
      "equip": "{\"weapon\":\"oakStaff\",\"armor\":\"clothArmor\"}"
     },
-    "inv": "{\"potion\":8,\"moonDrop\":0,\"starTonic\":0,\"nightFeather\":3,\"flameHorn\":0,\"shadowFang\":6,\"eclipseWing\":0,\"skyCrystal\":3,\"windSilk\":3,\"astralCore\":0,\"duskBell\":0}",
+    "inv": "{\"potion\":8,\"moonDrop\":0,\"starTonic\":0,\"nightFeather\":3,\"flameHorn\":0,\"shadowFang\":6,\"eclipseWing\":0,\"skyCrystal\":3,\"windSilk\":3,\"astralCore\":0,\"duskBell\":0,\"abyssTonic\":0,\"abyssShard\":0,\"emberCore\":0,\"abyssHeart\":0}",
     "gear": "{\"rustSword\":1,\"oakStaff\":1,\"clothArmor\":2}",
     "flags": "{\"maxChapter\":4,\"clearedChapters\":{\"1\":true,\"2\":true,\"3\":true},\"chests\":{\"4:1:7,3\":true}}",
     "enemies": "",
@@ -951,7 +951,7 @@
      "skills": "moonheal",
      "equip": "{\"weapon\":\"oakStaff\",\"armor\":\"clothArmor\"}"
     },
-    "inv": "{\"potion\":8,\"moonDrop\":0,\"starTonic\":0,\"nightFeather\":3,\"flameHorn\":0,\"shadowFang\":6,\"eclipseWing\":0,\"skyCrystal\":3,\"windSilk\":3,\"astralCore\":0,\"duskBell\":0}",
+    "inv": "{\"potion\":8,\"moonDrop\":0,\"starTonic\":0,\"nightFeather\":3,\"flameHorn\":0,\"shadowFang\":6,\"eclipseWing\":0,\"skyCrystal\":3,\"windSilk\":3,\"astralCore\":0,\"duskBell\":0,\"abyssTonic\":0,\"abyssShard\":0,\"emberCore\":0,\"abyssHeart\":0}",
     "gear": "{\"rustSword\":1,\"oakStaff\":1,\"clothArmor\":2}",
     "flags": "{\"maxChapter\":4,\"clearedChapters\":{\"1\":true,\"2\":true,\"3\":true},\"chests\":{\"4:1:7,3\":true}}",
     "enemies": "",
@@ -1005,7 +1005,7 @@
      "skills": "moonheal",
      "equip": "{\"weapon\":\"oakStaff\",\"armor\":\"clothArmor\"}"
     },
-    "inv": "{\"potion\":8,\"moonDrop\":0,\"starTonic\":0,\"nightFeather\":3,\"flameHorn\":0,\"shadowFang\":6,\"eclipseWing\":0,\"skyCrystal\":3,\"windSilk\":3,\"astralCore\":0,\"duskBell\":0}",
+    "inv": "{\"potion\":8,\"moonDrop\":0,\"starTonic\":0,\"nightFeather\":3,\"flameHorn\":0,\"shadowFang\":6,\"eclipseWing\":0,\"skyCrystal\":3,\"windSilk\":3,\"astralCore\":0,\"duskBell\":0,\"abyssTonic\":0,\"abyssShard\":0,\"emberCore\":0,\"abyssHeart\":0}",
     "gear": "{\"rustSword\":1,\"oakStaff\":1,\"clothArmor\":2}",
     "flags": "{\"maxChapter\":4,\"clearedChapters\":{\"1\":true,\"2\":true,\"3\":true},\"chests\":{\"4:1:7,3\":true}}",
     "enemies": "黄昏のヴェスペル:900/900",
@@ -1059,7 +1059,7 @@
      "skills": "moonheal",
      "equip": "{\"weapon\":\"oakStaff\",\"armor\":\"clothArmor\"}"
     },
-    "inv": "{\"potion\":8,\"moonDrop\":0,\"starTonic\":0,\"nightFeather\":3,\"flameHorn\":0,\"shadowFang\":6,\"eclipseWing\":0,\"skyCrystal\":3,\"windSilk\":3,\"astralCore\":0,\"duskBell\":1}",
+    "inv": "{\"potion\":8,\"moonDrop\":0,\"starTonic\":0,\"nightFeather\":3,\"flameHorn\":0,\"shadowFang\":6,\"eclipseWing\":0,\"skyCrystal\":3,\"windSilk\":3,\"astralCore\":0,\"duskBell\":1,\"abyssTonic\":0,\"abyssShard\":0,\"emberCore\":0,\"abyssHeart\":0}",
     "gear": "{\"rustSword\":1,\"oakStaff\":1,\"clothArmor\":2}",
     "flags": "{\"maxChapter\":4,\"clearedChapters\":{\"1\":true,\"2\":true,\"3\":true,\"4\":true},\"chests\":{\"4:1:7,3\":true}}",
     "enemies": "",

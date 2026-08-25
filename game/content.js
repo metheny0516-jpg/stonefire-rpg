@@ -135,6 +135,27 @@ export const TOWNS = Object.freeze({
       '1111111111111111',
     ]),
   }),
+  5: Object.freeze({
+    name: '灰礫の坑口',
+    subtitle: '深淵の洞へ下りる、最後の灯りのある町',
+    palette: 'stone',
+    inn: 160,
+    spawn: Object.freeze({ x: 13, y: 10 }),
+    map: Object.freeze([
+      '1111111111111111',
+      '1111111111111111',
+      '1161111711118111',
+      '1000000000000001',
+      '1000000000000001',
+      '1011000000001101',
+      '1000099000000001',
+      '1000099000000001',
+      '1011000000001101',
+      '1000000000000001',
+      '1500000000000021',
+      '1111111111111111',
+    ]),
+  }),
 });
 
 // 装備。slot: weapon(武器) / armor(体防具)。owner: hero=ルカ mage=ミナ both=共用
@@ -193,6 +214,28 @@ export const EQUIPMENT = Object.freeze({
     desc: '星をも裂くと謳われた剣',
     tint: '#8ef2e4',
   }),
+  duskEdge: Object.freeze({
+    name: '黄昏断ち',
+    slot: 'weapon',
+    owner: 'hero',
+    atk: 27,
+    price: 2400,
+    chapter: 4,
+    icon: '†',
+    desc: '黄昏の鐘の欠片を鋳込んだ長剣',
+    tint: '#d08bff',
+  }),
+  abyssEdge: Object.freeze({
+    name: '深淵喰らい',
+    slot: 'weapon',
+    owner: 'hero',
+    atk: 38,
+    price: 4800,
+    chapter: 5,
+    icon: '†',
+    desc: '斬るたびに、闇をひとくち飲み込む',
+    tint: '#ff6f9d',
+  }),
   oakStaff: Object.freeze({
     name: '樫の杖',
     slot: 'weapon',
@@ -247,6 +290,28 @@ export const EQUIPMENT = Object.freeze({
     desc: '空の芯に届く力を宿す',
     tint: '#d3a2ff',
   }),
+  duskStaff: Object.freeze({
+    name: '黄昏の杖',
+    slot: 'weapon',
+    owner: 'mage',
+    atk: 26,
+    price: 2420,
+    chapter: 4,
+    icon: '⚚',
+    desc: '鐘の音を魔力に変える杖',
+    tint: '#c58bff',
+  }),
+  abyssStaff: Object.freeze({
+    name: '深淵の杖',
+    slot: 'weapon',
+    owner: 'mage',
+    atk: 37,
+    price: 4850,
+    chapter: 5,
+    icon: '⚚',
+    desc: '地の底の脈動をそのまま撃ち出す',
+    tint: '#ff7ab4',
+  }),
   clothArmor: Object.freeze({
     name: '旅装',
     slot: 'armor',
@@ -300,6 +365,28 @@ export const EQUIPMENT = Object.freeze({
     icon: '▥',
     desc: '星屑を鍛え込んだ鎧',
     tint: '#79d6e8',
+  }),
+  duskMail: Object.freeze({
+    name: '黄昏の鎧',
+    slot: 'armor',
+    owner: 'both',
+    def: 22,
+    price: 2300,
+    chapter: 4,
+    icon: '▥',
+    desc: '夕闇の色に沈む鎧',
+    tint: '#b38ad6',
+  }),
+  abyssMail: Object.freeze({
+    name: '深淵鱗の鎧',
+    slot: 'armor',
+    owner: 'both',
+    def: 31,
+    price: 4600,
+    chapter: 5,
+    icon: '▥',
+    desc: '竜の鱗を継ぎ合わせた、洞の底の守り',
+    tint: '#e07a9d',
   }),
 });
 
@@ -515,6 +602,74 @@ export const ENEMIES = Object.freeze({
     behavior: 'astralBoss',
     drops: [{ id: 'duskBell', chance: 1 }],
   }),
+  // --- 第5章「深淵の洞」地下1階 ---
+  crystalBoar: Object.freeze({
+    name: '晶牙のガロウ',
+    maxHp: 540,
+    atk: 68,
+    def: 30,
+    spd: 12,
+    exp: 330,
+    gold: 170,
+    color: '#3f7bd8',
+    art: 1.15,
+    behavior: 'charge',
+    drops: [{ id: 'abyssShard', chance: 0.42 }],
+  }),
+  crimsonBat: Object.freeze({
+    name: '緋翼のヴェイル',
+    maxHp: 420,
+    atk: 72,
+    def: 18,
+    spd: 22,
+    exp: 300,
+    gold: 155,
+    color: '#c8407a',
+    art: 1.0,
+    behavior: 'swift',
+    drops: [{ id: 'nightFeather', chance: 0.5 }],
+  }),
+  // --- 地下2階 ---
+  crystalLizard: Object.freeze({
+    name: '紫晶のドレイク',
+    maxHp: 720,
+    atk: 80,
+    def: 34,
+    spd: 15,
+    exp: 430,
+    gold: 215,
+    color: '#8b4fe0',
+    art: 1.2,
+    behavior: 'crystal',
+    drops: [{ id: 'abyssShard', chance: 0.5 }],
+  }),
+  thunderKnight: Object.freeze({
+    name: '碧焔の巨兵',
+    maxHp: 880,
+    atk: 86,
+    def: 44,
+    spd: 10,
+    exp: 520,
+    gold: 260,
+    color: '#4fd8ff',
+    art: 1.35,
+    behavior: 'astralBoss',
+    drops: [{ id: 'emberCore', chance: 0.45 }],
+  }),
+  boss5: Object.freeze({
+    name: '深淵のアズヴァル',
+    art: 1.1,
+    maxHp: 1800,
+    atk: 78,
+    def: 46,
+    spd: 16,
+    exp: 1600,
+    gold: 2200,
+    color: '#e0407a',
+    boss: true,
+    behavior: 'astralBoss',
+    drops: [{ id: 'abyssHeart', chance: 1 }],
+  }),
 });
 
 export const ENCOUNTERS = Object.freeze({
@@ -522,9 +677,10 @@ export const ENCOUNTERS = Object.freeze({
   2: Object.freeze(['wisp', 'wolf']),
   3: Object.freeze(['golum', 'zepha']),
   4: Object.freeze(['rust', 'emberEcho']),
+  5: Object.freeze(['crystalBoar', 'crimsonBat']),
 });
 
-export const BOSSES = Object.freeze({ 1: 'boss', 2: 'boss2', 3: 'boss3', 4: 'boss4' });
+export const BOSSES = Object.freeze({ 1: 'boss', 2: 'boss2', 3: 'boss3', 4: 'boss4', 5: 'boss5' });
 
 export const SKILLS = Object.freeze([
   // ルカ: たたかう(=1.0倍)を基準に、段数・全体化・防御無視で役割を分ける
@@ -826,6 +982,30 @@ export const ITEMS = Object.freeze({
     sell: 1400,
     precious: true,
   }),
+  abyssTonic: Object.freeze({
+    name: '深淵の雫',
+    icon: '❉',
+    desc: '全員を回復（最大HPの60%）。戦闘不能も治す。合成でしか作れない',
+    usable: true,
+    revive: true,
+    healAll: 60,
+    rate: 0.6,
+    sell: 140,
+  }),
+  abyssShard: Object.freeze({ name: '深淵晶', icon: '❖', desc: '地の底で育った黒紫の結晶', sell: 70 }),
+  emberCore: Object.freeze({
+    name: '碧焔の芯',
+    icon: '✸',
+    desc: '消えない蒼い火が閉じ込められている',
+    sell: 96,
+  }),
+  abyssHeart: Object.freeze({
+    name: '深淵の心臓',
+    icon: '✹',
+    desc: '深淵のアズヴァルを倒した証。まだ脈打っている',
+    sell: 2600,
+    precious: true,
+  }),
 });
 
 export const ASSETS = Object.freeze({
@@ -852,6 +1032,11 @@ export const ASSETS = Object.freeze({
     runeGolem: './enemy-rune-golem.png',
     voidMaw: './enemy-void-maw.png',
     boss4: './enemy-dusk-boss-vesper.png',
+    crystalBoar: './enemy-crystal-boar.png',
+    crimsonBat: './enemy-crimson-bat.png',
+    crystalLizard: './enemy-crystal-lizard.png',
+    thunderKnight: './enemy-thunder-knight.png',
+    boss5: './enemy-cave-boss-dragon.png',
   }),
 });
 
@@ -865,6 +1050,10 @@ export const ITEM_RECIPES = Object.freeze([
   Object.freeze({ id: 'moonDrop', amount: 1, needs: Object.freeze({ shadowFang: 2 }) }),
   // 蒼天晶+風紋の糸 (売値74G) → 星雫の霊薬×1 (店では買えない)
   Object.freeze({ id: 'starTonic', amount: 1, needs: Object.freeze({ skyCrystal: 1, windSilk: 1 }) }),
+  // 深淵晶×2 (売値140G) → 星雫の霊薬×2。深淵の洞では回復量がものを言う
+  Object.freeze({ id: 'starTonic', amount: 2, needs: Object.freeze({ abyssShard: 2 }) }),
+  // 碧焔の芯+深淵晶 (売値166G) → 深淵の雫×1 (店では買えない)
+  Object.freeze({ id: 'abyssTonic', amount: 1, needs: Object.freeze({ emberCore: 1, abyssShard: 1 }) }),
 ]);
 
 // 章のメタ情報。旅立ち先の一覧と、各章の開始地点に使う。
@@ -894,8 +1083,15 @@ export const CHAPTERS = Object.freeze({
     start: Object.freeze({ x: 1, y: 10 }),
     tower: true,
   }),
+  5: Object.freeze({
+    name: '深淵の洞',
+    full: '石牢の灯火・深淵篇',
+    where: '灰礫の坑口',
+    start: Object.freeze({ x: 1, y: 10 }),
+    tower: true,
+  }),
 });
-export const MAX_CHAPTER = 4;
+export const MAX_CHAPTER = 5;
 
 // --- 第4章「黄昏の塔」---------------------------------------------------
 // タイル: 0通路 / 1壁 / 2町へ / 3ボス / 4回復 / u上り階段 / d下り階段
@@ -963,4 +1159,81 @@ export const TOWER_CHESTS = Object.freeze({
 export const TOWER_LANDING = Object.freeze({
   1: Object.freeze({ x: 1, y: 9 }),
   2: Object.freeze({ x: 1, y: 8 }),
+});
+
+// --- 第5章「深淵の洞」-------------------------------------------------
+// 塔と同じタイルに加えて g=光苔（踏むと洞がしばらく照らされる）。
+// 深淵の洞は下へ潜るので、u が「下り」、落とし穴も一段深く落ちる。
+export const CAVE_FLOORS = 2;
+export const CAVE_MAPS = Object.freeze({
+  1: Object.freeze([
+    '1111111111111111',
+    '101c100000001u11',
+    '1010101011101011',
+    '1010101014000011',
+    '1010101011111111',
+    '1010001000p00011',
+    '1011111110101p11',
+    '1010000000100011',
+    '1000111110001011',
+    '10001c00000p1011',
+    '1211111111111111',
+    '1111111111111111',
+  ]),
+  2: Object.freeze([
+    '1111111111111111',
+    '1g00001310000011',
+    '1111101010101011',
+    '10000010000g1011',
+    '1011111011101011',
+    '101c00000c100011',
+    '1011111110101011',
+    '1000000g00101011',
+    '1000111110101011',
+    '10001d0000001411',
+    '1111111111111111',
+    '1111111111111111',
+  ]),
+});
+export const CAVE_ENCOUNTERS = Object.freeze({
+  1: Object.freeze(['crystalBoar', 'crimsonBat']),
+  2: Object.freeze(['crystalLizard', 'thunderKnight']),
+});
+export const CAVE_CHESTS = Object.freeze({
+  '1:3,1': Object.freeze({ gold: 600, item: 'starTonic', amount: 1 }),
+  '1:5,9': Object.freeze({ item: 'abyssShard', amount: 3 }),
+  '2:3,5': Object.freeze({ gold: 900, item: 'moonDrop', amount: 3 }),
+  '2:9,5': Object.freeze({ item: 'emberCore', amount: 2, gold: 480 }),
+});
+// 落とし穴で落ちた先。洞では一段「深く」落ちる。
+export const CAVE_LANDING = Object.freeze({ 2: Object.freeze({ x: 1, y: 7 }) });
+
+// 多層ダンジョンの登録簿。章を足すときはここに1行増やす。
+// pitStep: 落とし穴で階層番号がどちらへ動くか（塔は上から落ちるので -1）
+// descend: 階層番号が大きいほど「地下」。階段の見た目と表記が反転する
+// dark:    その階が暗い（プレイヤーの周りだけ見える）。光苔で一時的に晴れる
+export const DUNGEONS = Object.freeze({
+  4: Object.freeze({
+    floors: TOWER_FLOORS,
+    maps: TOWER_MAPS,
+    encounters: TOWER_ENCOUNTERS,
+    chests: TOWER_CHESTS,
+    landing: TOWER_LANDING,
+    theme: 'tower',
+    pitStep: -1,
+    descend: false,
+    dark: null,
+  }),
+  5: Object.freeze({
+    floors: CAVE_FLOORS,
+    maps: CAVE_MAPS,
+    encounters: CAVE_ENCOUNTERS,
+    chests: CAVE_CHESTS,
+    landing: CAVE_LANDING,
+    theme: 'cave',
+    pitStep: 1,
+    descend: true,
+    dark: Object.freeze({ 2: 3 }),
+    mossSteps: 24,
+  }),
 });

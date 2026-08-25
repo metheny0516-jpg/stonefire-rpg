@@ -45,3 +45,29 @@ node tests/ast-compare.mjs
 ```
 
 一致しなければ、最初に食い違った位置を表示する。
+
+## 3. 章ごとの回帰テスト
+
+いずれも `python3 -m http.server 8798` を起動した状態で実行する。
+
+| ファイル | 見ているもの |
+| --- | --- |
+| `travel-regression.mjs` | 一度行った章へ「旅立ち」で戻れること |
+| `unlock-regression.mjs` | 討伐の証を売っても解錠状態が失われないこと |
+| `skills-regression.mjs` | スタン／吸収／ディフレクト／蘇生／フィールド回復 |
+| `chapter5-regression.mjs` | 第5章の2階層・宝箱・落とし穴・光苔・階段・ボス |
+
+```
+for f in travel unlock skills chapter5; do node tests/$f-regression.mjs; done
+```
+
+### 戦闘を絡めたテストを書くときの注意
+
+- **行動順には ±15% の揺らぎがある**（`buildTurnOrder`）。狙った側に手番を
+  回したいときは、素早さを大きく離してから `startBattle` を呼ぶこと。
+  「速いはずだから先手」では落ちる
+- **スタンや「動けない！」は一瞬で消える。** 演出が終わってから状態を
+  見に行っても遅い。`skills-regression.mjs` の `watch()` のように、
+  演出中を細かく覗いて記録する
+- **前の戦闘を畳んでから次を始める。** `state.mode` を書き換えるだけでは
+  クリア画面が残ってクリックを吸うので、`#overlay` の `show` も外す

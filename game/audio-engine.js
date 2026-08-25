@@ -88,6 +88,25 @@ const BATTLE_SETS = Object.freeze({
     stab: 'sawtooth',
     drive: 1.05,
   }),
+  // 第5章「深淵の洞」: F#ロクリアン寄りのマイナー。地の底らしく最低音域まで沈める
+  5: Object.freeze({
+    chords: [
+      [30, 37, 42],
+      [30, 37, 42],
+      [35, 42, 47],
+      [33, 40, 45],
+      [28, 35, 40],
+      [37, 41, 44],
+      [31, 38, 43],
+      [30, 37, 42],
+    ],
+    A: [66, 66, 69, 73, 71, 69, 66, 64, 66, 69, 73, 76, 74, 73, 71, 69],
+    B: [78, 76, 73, 71, 69, 71, 73, 76, 74, 73, 69, 66, 69, 66, 65, 66],
+    lead: 'sawtooth',
+    counter: 'square',
+    stab: 'sawtooth',
+    drive: 1.15,
+  }),
 });
 
 // --- 第1章「石牢」: 低く沈んだ短調、水滴の反響 ---
@@ -138,6 +157,18 @@ const F4_MELODY = Object.freeze([
   72, 71, 68, 69, 69,
 ]);
 
+// --- 第5章「深淵の洞」: 低く据わったエオリアン、滴りと地鳴り ---
+const F5_CHORDS = Object.freeze([
+  [30, 37, 42],
+  [35, 42, 47],
+  [33, 40, 45],
+  [28, 35, 40],
+]);
+const F5_MELODY = Object.freeze([
+  66, 69, 71, 73, 71, 69, 66, 64, 66, 69, 73, 76, 74, 73, 71, 69, 64, 66, 69, 71, 69, 66, 64, 62, 61, 64, 66,
+  69, 68, 66, 64, 61,
+]);
+
 // --- ボス戦: 172BPM、Dマイナーの追い立てるリフ ---
 const BOSS_CHORDS = Object.freeze([
   [38, 41, 45],
@@ -161,6 +192,7 @@ const BOSS_VARIANTS = Object.freeze({
   2: Object.freeze({ shift: -3, lead: 'square', bass: 'sawtooth' }),
   3: Object.freeze({ shift: 4, lead: 'sawtooth', bass: 'square' }),
   4: Object.freeze({ shift: -5, lead: 'square', bass: 'sawtooth' }),
+  5: Object.freeze({ shift: -8, lead: 'sawtooth', bass: 'square' }),
 });
 
 // --- 勝利/章クリア: 明るいハ長調のループ ---
@@ -290,7 +322,7 @@ export function trackForState(state) {
   if (!state) return 'field1';
   if (state.mode === 'over') return 'over';
   if (state.mode === 'clear') return 'clear';
-  const chapter = Math.max(1, Math.min(4, state.chapter || 1));
+  const chapter = Math.max(1, Math.min(5, state.chapter || 1));
   if (state.mode === 'battle') {
     const boss = (state.enemies || []).some(e => e && e.boss) || !!(state.enemy && state.enemy.boss);
     return (boss ? 'boss' : 'battle') + chapter;
@@ -1580,6 +1612,60 @@ export function createGameAudio({ getState, enabled = true } = {}) {
       return;
     }
 
+    if (cfg.name === 'field5') {
+      // 深淵の洞: ほぼ低音の地鳴りだけ。旋律は水滴のように点で落ちる
+      if (beat === 0) {
+        oscillator({
+          frequency: midi(chord[0] - 12),
+          endFrequency: midi(chord[0] - 12.5),
+          duration: 6.4,
+          type: 'sawtooth',
+          gain: 0.024,
+          attack: 1.1,
+          when,
+          bus: bus(),
+        });
+        pad(chord, { duration: 5.0, gain: 0.009, when, bus: bus() });
+      }
+      if (beat % 8 === 0)
+        oscillator({
+          frequency: midi(chord[0] - 24),
+          endFrequency: midi(chord[0] - 24.2),
+          duration: 2.4,
+          type: 'sine',
+          gain: 0.036,
+          attack: 0.18,
+          when,
+          bus: bus(),
+        });
+      // 水滴。ゆっくり、左右にばらけて落ちる
+      if (beat % 4 === 0 || beat % 16 === 7) {
+        const note = cfg.melody[(Math.floor(loop / 4) + (beat % 16 === 7 ? 5 : 0)) % cfg.melody.length];
+        bell(note + 12, {
+          duration: 1.1,
+          gain: beat % 4 === 0 ? 0.02 : 0.011,
+          when,
+          bus: bus(),
+          bright: 1.35,
+          echo: 0.7,
+          pan: (loop / 4) % 3 === 0 ? -0.36 : (loop / 4) % 3 === 1 ? 0.36 : 0.05,
+        });
+      }
+      // 遠くの岩鳴り
+      if (beat % 16 === 12)
+        noiseBurst({
+          duration: 1.3,
+          gain: 0.008,
+          frequency: 320,
+          type: 'lowpass',
+          q: 0.6,
+          when,
+          bus: bus(),
+          curve: 2.2,
+        });
+      return;
+    }
+
     // field3 — 星骸の塔: 開けた響き、鐘、きらめき
     if (beat % 8 === 0) {
       pad(chord, { duration: 3.4, gain: 0.011, when, bus: bus(), type: 'sawtooth' });
@@ -1751,11 +1837,17 @@ export function createGameAudio({ getState, enabled = true } = {}) {
       intro: 0,
       schedule: (s, w) => scheduleFieldStep(s, w, { name: 'field4', chords: F4_CHORDS, melody: F4_MELODY }),
     },
+    field5: {
+      step: 0.23,
+      verb: 0.44,
+      intro: 0,
+      schedule: (s, w) => scheduleFieldStep(s, w, { name: 'field5', chords: F5_CHORDS, melody: F5_MELODY }),
+    },
     clear: { step: 0.15, verb: 0.22, intro: 0, schedule: scheduleClearStep },
     over: { step: 0.34, verb: 0.42, intro: 0, schedule: scheduleOverStep },
   };
   // 章ごとの通常戦闘曲とボス曲を組み立てる
-  [1, 2, 3, 4].forEach(chapter => {
+  [1, 2, 3, 4, 5].forEach(chapter => {
     const set = BATTLE_SETS[chapter];
     const variant = BOSS_VARIANTS[chapter];
     TRACKS['battle' + chapter] = {
@@ -2176,7 +2268,8 @@ export function createGameAudio({ getState, enabled = true } = {}) {
       kind === 'step1' ||
       kind === 'step2' ||
       kind === 'step3' ||
-      kind === 'step4'
+      kind === 'step4' ||
+      kind === 'step5'
     ) {
       // 章ごとに床の質感を変える。実録素材があればそちらを優先する。
       const ground = kind === 'step2' ? 'stepGrass' : kind === 'step4' ? 'stepWood' : 'stepStone';
@@ -2184,7 +2277,8 @@ export function createGameAudio({ getState, enabled = true } = {}) {
       if (playSample(ground, { gain: 0.42, rate: jitter, pan: (Math.random() - 0.5) * 0.3, verb: 0.12 })) {
         return;
       }
-      const variant = kind === 'step2' ? 2 : kind === 'step3' ? 3 : kind === 'step4' ? 4 : 1;
+      const variant =
+        kind === 'step2' ? 2 : kind === 'step3' ? 3 : kind === 'step4' ? 4 : kind === 'step5' ? 5 : 1;
       if (variant === 2) {
         noiseBurst({
           duration: 0.07,
@@ -2203,6 +2297,23 @@ export function createGameAudio({ getState, enabled = true } = {}) {
           duration: 0.06,
           type: 'triangle',
           gain: 0.024,
+        });
+      } else if (variant === 5) {
+        // 洞の砂利。湿った反響を少しだけ足す
+        noiseBurst({
+          duration: 0.09,
+          gain: 0.03,
+          frequency: 1150 * jitter,
+          type: 'bandpass',
+          q: 0.9,
+          curve: 1.8,
+        });
+        oscillator({
+          frequency: 150 * jitter,
+          endFrequency: 84,
+          duration: 0.07,
+          type: 'triangle',
+          gain: 0.026,
         });
       } else {
         noiseBurst({ duration: 0.06, gain: 0.032, frequency: 1500 * jitter, type: 'bandpass', q: 1.1 });
@@ -2476,14 +2587,17 @@ export const AUDIO_DESIGN = Object.freeze({
     'field2',
     'field3',
     'field4',
+    'field5',
     'battle1',
     'battle2',
     'battle3',
     'battle4',
+    'battle5',
     'boss1',
     'boss2',
     'boss3',
     'boss4',
+    'boss5',
     'clear',
     'over',
   ],

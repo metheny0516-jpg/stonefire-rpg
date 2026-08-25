@@ -1,9 +1,5 @@
 import {
-  TOWER_MAPS,
-  TOWER_ENCOUNTERS,
-  TOWER_CHESTS,
-  TOWER_LANDING,
-  TOWER_FLOORS,
+  DUNGEONS,
   CHAPTERS,
   MAX_CHAPTER,
   ITEM_RECIPES,
@@ -291,7 +287,7 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
     setMsg('⚠ セーブできなかった。ブラウザの保存容量やプライベートモードを確認してほしい。');
   }
   function chapterName(chapter) {
-    return chapter === 3 ? '星骸の塔' : chapter === 2 ? '月影の森' : '石牢';
+    return CHAPTERS[chapter]?.name || '石牢';
   }
   function formatPlay(ms) {
     let total = Math.floor(Math.max(0, Number(ms) || 0) / 1000),
@@ -472,7 +468,7 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
       fy: Number.isInteger(d.fy) ? d.fy : y,
       dir: ['up', 'down', 'left', 'right'].includes(d.dir) ? d.dir : 'down',
       steps: Number(d.steps) || 0,
-      floor: Math.min(TOWER_FLOORS, Math.max(1, Number(d.floor) || 1)),
+      floor: Math.min(DUNGEONS[chapter]?.floors || 1, Math.max(1, Number(d.floor) || 1)),
       hero: h,
       companion: m,
       inventory,
@@ -710,19 +706,40 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
     $('#skillMenu').classList.toggle('show', battle && sub);
     if ($('#bagBtn')) $('#bagBtn').disabled = state.mode !== 'field' && state.mode !== 'town';
   }
+  // 多層ダンジョン（塔・洞）の設定。無い章は null。
+  function dungeon(chapter = state?.chapter) {
+    return DUNGEONS[chapter] || null;
+  }
   function isTower(chapter = state?.chapter) {
-    return !!CHAPTERS[chapter]?.tower;
+    return !!dungeon(chapter);
+  }
+  // 深く潜るダンジョンでは階層表示だけ反転させ、番号の意味（大きいほど奥）は揃える
+  function floorLabel(floor = currentFloor(), chapter = state?.chapter) {
+    let d = dungeon(chapter);
+    if (!d) return '';
+    return d.descend ? 'B' + floor + 'F' : floor + ' / ' + d.floors + ' F';
+  }
+  // 文中で使う短い呼び方。「2 / 3 Fの床が抜け」では読めない
+  function floorShort(floor = currentFloor(), chapter = state?.chapter) {
+    let d = dungeon(chapter);
+    if (!d) return '';
+    return d.descend ? 'B' + floor + 'F' : floor + '階';
   }
   function currentFloor() {
-    return Math.min(TOWER_FLOORS, Math.max(1, Number(state?.floor) || 1));
+    return Math.min(dungeon()?.floors || 1, Math.max(1, Number(state?.floor) || 1));
+  }
+  function floorMap(floor = currentFloor(), chapter = state?.chapter) {
+    return dungeon(chapter)?.maps?.[floor] || null;
   }
   async function changeFloor(to) {
-    let floor = Math.min(TOWER_FLOORS, Math.max(1, to));
+    let d = dungeon();
+    if (!d) return;
+    let floor = Math.min(d.floors, Math.max(1, to));
     if (floor === currentFloor()) return;
-    let up = floor > currentFloor();
+    let deeper = floor > currentFloor();
     state.floor = floor;
     // 移動先の階の、対になる階段の上に出る
-    let want = up ? 'd' : 'u',
+    let want = deeper ? 'd' : 'u',
       spot = findTile(want) || { x: 1, y: 9 };
     state.x = spot.x;
     state.y = spot.y;
@@ -730,14 +747,23 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
     state.fy = spot.y;
     state.steps = 0;
     state.walk = 0;
-    sfx(up ? 'chapterStart' : 'menuOpen');
-    setMsg(up ? floor + '階へ上がった。空気が冷たくなった……' : floor + '階へ下りた。');
+    state.moss = 0;
+    sfx(deeper ? 'chapterStart' : 'menuOpen');
+    setMsg(
+      d.descend
+        ? deeper
+          ? floorShort(floor) + 'へ下りた。岩肌の湿りが濃くなる……'
+          : floorShort(floor) + 'へ戻った。'
+        : deeper
+          ? floor + '階へ上がった。空気が冷たくなった……'
+          : floor + '階へ下りた。',
+    );
     sync();
     draw();
     saveGame();
   }
   function findTile(ch) {
-    let g = TOWER_MAPS[currentFloor()];
+    let g = floorMap();
     if (!g) return null;
     for (let y = 0; y < g.length; y++) {
       let x = g[y].indexOf(ch);
@@ -755,7 +781,7 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
       draw();
       return;
     }
-    let loot = TOWER_CHESTS[currentFloor() + ':' + x + ',' + y] || { gold: 80 };
+    let loot = dungeon()?.chests?.[currentFloor() + ':' + x + ',' + y] || { gold: 80 };
     bag[key] = true;
     let parts = [];
     if (loot.gold) {
@@ -773,9 +799,10 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
     saveGame();
   }
   async function fallThroughPit() {
-    let from = currentFloor(),
-      to = Math.max(1, from - 1),
-      spot = TOWER_LANDING[to] || { x: 1, y: 9 };
+    let d = dungeon(),
+      from = currentFloor(),
+      to = Math.min(d?.floors || 1, Math.max(1, from + (d?.pitStep ?? -1))),
+      spot = d?.landing?.[to] || { x: 1, y: 9 };
     sfx('bump');
     setMsg('足もとが抜けた！');
     draw();
@@ -796,7 +823,8 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
     });
     sfx('enemy');
     cameraShake(5, 300);
-    setMsg(from + '階の床が抜け、' + to + '階まで落ちた！ ' + dmg + ' ダメージ！');
+    state.moss = 0;
+    setMsg(floorShort(from) + 'の床が抜け、' + floorShort(to) + 'まで落ちた！ ' + dmg + ' ダメージ！');
     sync();
     draw();
     saveGame();
@@ -823,7 +851,13 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
     return Math.max(1, Math.min(MAX_CHAPTER, recorded));
   }
   // ボスの討伐品は、その章を攻略した動かぬ証拠になる。
-  const BOSS_TROPHY = Object.freeze({ flameHorn: 1, eclipseWing: 2, astralCore: 3, duskBell: 4 });
+  const BOSS_TROPHY = Object.freeze({
+    flameHorn: 1,
+    eclipseWing: 2,
+    astralCore: 3,
+    duskBell: 4,
+    abyssHeart: 5,
+  });
 
   // 手元の証拠を全部集めて、到達済みの章を組み立て直す。
   // 現在の章だけを基準にすると、前の章へ戻って保存したセーブで先の章の
@@ -877,6 +911,7 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
     state.chapter = c;
     state.mode = 'field';
     state.floor = 1;
+    state.moss = 0;
     state.x = meta.start.x;
     state.y = meta.start.y;
     state.fx = meta.start.x;
@@ -950,12 +985,7 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
     return TOWNS[state?.chapter || 1] || TOWNS[1];
   }
   function tile(x, y) {
-    let g =
-      state?.mode === 'town'
-        ? town().map
-        : isTower()
-          ? TOWER_MAPS[currentFloor()]
-          : MAPS[state?.chapter || 1];
+    let g = state?.mode === 'town' ? town().map : isTower() ? floorMap() : MAPS[state?.chapter || 1];
     return g?.[y]?.[x] || '1';
   }
   function gearOf(member, slot) {
@@ -1463,11 +1493,15 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
     state.busy = false;
     sfx('step' + state.chapter);
     setMsg(
-      state.chapter === 3
-        ? '二人は雲海に浮かぶ星骸の塔へ踏み込んだ。'
-        : state.chapter === 2
-          ? 'ルカとミナは月影の森へ足を踏み入れた。'
-          : 'ここがダンジョンの入口だ。',
+      state.chapter === 5
+        ? '灯りの届かない坑道が、地の底へ向かって口を開けている。'
+        : state.chapter === 4
+          ? '黄昏の塔の螺旋が、二人を上へ誘っている。'
+          : state.chapter === 3
+            ? '二人は雲海に浮かぶ星骸の塔へ踏み込んだ。'
+            : state.chapter === 2
+              ? 'ルカとミナは月影の森へ足を踏み入れた。'
+              : 'ここがダンジョンの入口だ。',
     );
     sync();
     draw();
@@ -1495,13 +1529,15 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
           ? '澄んだ水が湧く泉。旅人が水をくんでいる。'
           : inTown
             ? '町の家並みが道をふさいでいる。'
-            : state.chapter === 4
-              ? '黄昏に染まった塔の石壁が行く手をふさいでいる。'
-              : state.chapter === 3
-                ? '崩れた浮遊壁が行く手をふさいでいる。'
-                : state.chapter === 2
-                  ? '絡み合う根と茂みが道をふさいでいる。'
-                  : '冷たい石壁が行く手をふさいでいる。',
+            : state.chapter === 5
+              ? '湿った岩肌が、ぬるりと行く手をふさいでいる。'
+              : state.chapter === 4
+                ? '黄昏に染まった塔の石壁が行く手をふさいでいる。'
+                : state.chapter === 3
+                  ? '崩れた浮遊壁が行く手をふさいでいる。'
+                  : state.chapter === 2
+                    ? '絡み合う根と茂みが道をふさいでいる。'
+                    : '冷たい石壁が行く手をふさいでいる。',
       );
       draw();
       return false;
@@ -1568,6 +1604,19 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
         await fallThroughPit();
         return true;
       }
+      if (next === 'g') {
+        state.moss = dungeon()?.mossSteps || 20;
+        sfx('shrine');
+        setMsg('光苔を踏んだ。淡い燐光が洞をひろく照らし出す……');
+        sync();
+        draw();
+        return true;
+      }
+      // 灯りは歩くたびに弱まる
+      if (state.moss > 0) {
+        state.moss -= 1;
+        if (state.moss === 0) setMsg('光苔の燐光が消えた。闇がまた近づいてくる……');
+      }
     }
     if (next === '3' && state.bossAlive) {
       state.x = ox;
@@ -1587,13 +1636,15 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
       state.skillUses = Object.fromEntries(SKILLS.map(s => [s.id, s.uses]));
       state.mageUses = { heal: 2 };
       setMsg(
-        state.chapter === 4
-          ? '宵の残り火が二人を包んだ。戦闘不能も癒え、全員HP全回復！'
-          : state.chapter === 3
-            ? '星詠みの環が輝いた。戦闘不能も癒え、全員HP全回復！'
-            : state.chapter === 2
-              ? '月の泉の光が二人を包んだ。戦闘不能も癒え、全員HP全回復！'
-              : '灯火の祭壇が輝いた。戦闘不能も癒え、HP全回復！',
+        state.chapter === 5
+          ? '地脈の湧き水が二人を洗った。戦闘不能も癒え、全員HP全回復！'
+          : state.chapter === 4
+            ? '宵の残り火が二人を包んだ。戦闘不能も癒え、全員HP全回復！'
+            : state.chapter === 3
+              ? '星詠みの環が輝いた。戦闘不能も癒え、全員HP全回復！'
+              : state.chapter === 2
+                ? '月の泉の光が二人を包んだ。戦闘不能も癒え、全員HP全回復！'
+                : '灯火の祭壇が輝いた。戦闘不能も癒え、HP全回復！',
       );
       sfx('shrine');
       sync();
@@ -1610,20 +1661,24 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
       saveGame();
       startBattle(
         rollEncounterGroup(
-          isTower() ? TOWER_ENCOUNTERS[currentFloor()] || ENCOUNTERS[4] : ENCOUNTERS[state.chapter],
+          isTower()
+            ? dungeon().encounters[currentFloor()] || ENCOUNTERS[state.chapter]
+            : ENCOUNTERS[state.chapter],
           state.chapter,
         ),
       );
       return true;
     }
     setMsg(
-      state.chapter === 4
-        ? '二人の足音が、塔の螺旋にこだまする……'
-        : state.chapter === 3
-          ? '風と歯車の音が、天空の回廊に響く……'
-          : state.chapter === 2
-            ? '月明かりの下、二人の足音が重なる……'
-            : '足音が石牢に響く……',
+      state.chapter === 5
+        ? '滴りの音だけが、洞の奥から返ってくる……'
+        : state.chapter === 4
+          ? '二人の足音が、塔の螺旋にこだまする……'
+          : state.chapter === 3
+            ? '風と歯車の音が、天空の回廊に響く……'
+            : state.chapter === 2
+              ? '月明かりの下、二人の足音が重なる……'
+              : '足音が石牢に響く……',
     );
     sync();
     draw();
@@ -3345,6 +3400,40 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
     draw();
     saveGame();
   }
+  function startChapter5() {
+    state.chapter = 5;
+    noteChapterReached(5);
+    state.floor = 1;
+    state.moss = 0;
+    state.mode = 'field';
+    let st = CHAPTERS[5].start;
+    state.x = st.x;
+    state.y = st.y;
+    state.fx = st.x;
+    state.fy = st.y;
+    state.dir = 'up';
+    state.walk = 0;
+    state.steps = 0;
+    state.enemy = null;
+    state.enemies = [];
+    state.bossAlive = true;
+    state.cleared = false;
+    state.busy = false;
+    state.skillMenu = false;
+    state.itemMenu = false;
+    state.targetMenu = false;
+    state.hero.hp = state.hero.maxHp;
+    state.companion.active = true;
+    state.companion.hp = state.companion.maxHp;
+    state.inventory.potion = Math.max(8, itemCount('potion'));
+    state.hero.potions = state.inventory.potion;
+    hideOverlay();
+    setMsg('黄昏の鐘が地の底を指した。二人は深淵の洞へ下りていく。');
+    sfx('chapterStart');
+    sync();
+    draw();
+    saveGame();
+  }
   function startChapter3() {
     state.chapter = 3;
     noteChapterReached(3);
@@ -3963,12 +4052,27 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
       ch2 = state.chapter === 2,
       ch3 = state.chapter === 3,
       ch4 = state.chapter === 4,
+      ch5 = state.chapter === 5,
       party = m.active
         ? '<br>ミナ LV ' + m.lv + '　HP ' + m.hp + ' / ' + m.maxHp + '　EXP ' + m.exp + ' / ' + m.next
         : '';
     $('#overlay').classList.toggle('clear-screen', clear);
     if (clear) {
-      if (ch4) {
+      if (ch5) {
+        $('#overlayCard').innerHTML =
+          '<h1>第5章 制覇！</h1><p>深淵の脈動が止み、洞の底に、地上から届いた細い光が落ちてきた。</p><p><b>✓ 第5章クリアデータ保存済み</b><br>ルカ LV ' +
+          h.lv +
+          '　HP ' +
+          h.hp +
+          ' / ' +
+          h.maxHp +
+          '　EXP ' +
+          h.exp +
+          ' / ' +
+          h.next +
+          party +
+          '</p><button id="exploreClear">洞の底で光を見上げる</button><button id="again">LV1からやり直す</button><p style="color:#ffb0a8">※やり直すとこのセーブ枠のデータは消えます</p>';
+      } else if (ch4) {
         $('#overlayCard').innerHTML =
           '<h1>第4章 制覇！</h1><p>黄昏の鐘が鳴りやみ、塔にようやく夜が訪れた。</p><p><b>✓ 第4章クリアデータ保存済み</b><br>ルカ LV ' +
           h.lv +
@@ -3981,7 +4085,7 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
           ' / ' +
           h.next +
           party +
-          '</p><button id="exploreClear">塔の頂で夜明けを待つ</button><button id="again">LV1からやり直す</button><p style="color:#ffb0a8">※やり直すとこのセーブ枠のデータは消えます</p>';
+          '</p><button id="nextChapter5">第5章「深淵の洞」へ</button><button id="exploreClear">塔の頂で夜明けを待つ</button><button id="again">LV1からやり直す</button><p style="color:#ffb0a8">※やり直すとこのセーブ枠のデータは消えます</p>';
       } else if (ch3) {
         $('#overlayCard').innerHTML =
           '<h1>第3章 制覇！</h1><p>天穿の守護者は静まり、止まっていた星骸の塔が再び空を巡り始めた。</p><p><b>✓ 第3章クリアデータ保存済み</b><br>ルカ LV ' +
@@ -4030,7 +4134,19 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
     }
     $('#overlay').classList.add('show');
     if (clear) {
-      if (ch4) {
+      if (ch5) {
+        $('#exploreClear').onclick = () => {
+          state.mode = 'field';
+          state.enemy = null;
+          state.busy = false;
+          hideOverlay();
+          setMsg('遠い地上の光が、洞の底までまっすぐ落ちてきている。');
+          sync();
+          draw();
+          saveGame();
+        };
+      } else if (ch4) {
+        $('#nextChapter5').onclick = startChapter5;
         $('#exploreClear').onclick = () => {
           state.mode = 'field';
           state.enemy = null;
@@ -4097,6 +4213,7 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
       if (state.companion.active)
         drawFieldCompanion(state.fx * T + 10, state.fy * T + 10, state.dir, state.walk);
       drawFieldHero(state.x * T + 10, state.y * T + 10, state.dir, state.walk);
+      drawDarkness();
     } else drawBattle();
     X.restore();
   }
@@ -4342,9 +4459,56 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
     }
     drawStoneMap();
   }
+  // 塔と洞で色だけ差し替える。石組みの描き方そのものは共通。
+  const FLOOR_PALETTE = Object.freeze({
+    tower: {
+      bg: '#0d0a14',
+      wall: ['#3a2f4a', '#40354f'],
+      cap: '#54476a',
+      base: '#2a2236',
+      seam: '#251e30',
+      chip: '#6d5f88',
+      lip: '#8d7daa',
+      shadow: '#1a1522',
+      top: '#1c1626',
+      left: '#8578a0',
+      right: '#201a2b',
+      ground: ['#1d1a2a', '#221e31'],
+      gridLight: '#2f2a42',
+      gridDark: '#141220',
+      speck: '#3a3352',
+      panel: '#0c0916cc',
+      border: '#8f7bd6',
+      text: '#e6d9ff',
+      torch: true,
+    },
+    cave: {
+      bg: '#080b0e',
+      wall: ['#2b3438', '#313b40'],
+      cap: '#414e54',
+      base: '#1d2427',
+      seam: '#1a2124',
+      chip: '#5a6b71',
+      lip: '#7b8f96',
+      shadow: '#121719',
+      top: '#141a1c',
+      left: '#71858c',
+      right: '#161c1f',
+      ground: ['#161d20', '#1b2326'],
+      gridLight: '#242e32',
+      gridDark: '#0f1416',
+      speck: '#2f3d42',
+      panel: '#06090bcc',
+      border: '#5fd6c0',
+      text: '#d3fbf2',
+      torch: false,
+    },
+  });
   function drawDuskTowerMap() {
-    let g = TOWER_MAPS[currentFloor()] || TOWER_MAPS[1];
-    X.fillStyle = '#0d0a14';
+    let d = dungeon(),
+      pal = FLOOR_PALETTE[d?.theme] || FLOOR_PALETTE.tower,
+      g = floorMap() || d?.maps?.[1];
+    X.fillStyle = pal.bg;
     X.fillRect(0, 0, W, H);
     for (let y = 0; y < g.length; y++)
       for (let x = 0; x < 16; x++) {
@@ -4353,46 +4517,46 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
           py = y * T,
           seed = (x * 17 + y * 31) % 7;
         if (v === '1') {
-          X.fillStyle = seed < 2 ? '#3a2f4a' : '#40354f';
+          X.fillStyle = pal.wall[seed < 2 ? 0 : 1];
           X.fillRect(px, py, T, T);
-          X.fillStyle = '#54476a';
+          X.fillStyle = pal.cap;
           X.fillRect(px + 1, py + 1, 18, 2);
-          X.fillStyle = '#2a2236';
+          X.fillStyle = pal.base;
           X.fillRect(px, py + 17, 20, 3);
-          X.fillStyle = '#251e30';
+          X.fillStyle = pal.seam;
           X.fillRect(px + 9 + (y % 2 ? 1 : 0), py + 3, 2, 14);
-          X.fillStyle = '#6d5f88';
+          X.fillStyle = pal.chip;
           X.fillRect(px + 2, py + 4, 6, 1);
           X.fillRect(px + 12, py + 11, 6, 1);
           if (tile(x, y + 1) !== '1') {
-            X.fillStyle = '#8d7daa';
+            X.fillStyle = pal.lip;
             X.fillRect(px, py + 15, 20, 2);
-            X.fillStyle = '#1a1522';
+            X.fillStyle = pal.shadow;
             X.fillRect(px, py + 17, 20, 3);
           }
           if (tile(x, y - 1) !== '1') {
-            X.fillStyle = '#1c1626';
+            X.fillStyle = pal.top;
             X.fillRect(px, py, 20, 3);
           }
           if (tile(x - 1, y) !== '1') {
-            X.fillStyle = '#8578a0';
+            X.fillStyle = pal.left;
             X.fillRect(px, py, 2, 17);
           }
           if (tile(x + 1, y) !== '1') {
-            X.fillStyle = '#201a2b';
+            X.fillStyle = pal.right;
             X.fillRect(px + 18, py, 2, 18);
           }
         } else {
-          X.fillStyle = seed < 3 ? '#1d1a2a' : '#221e31';
+          X.fillStyle = pal.ground[seed < 3 ? 0 : 1];
           X.fillRect(px, py, T, T);
-          X.fillStyle = '#2f2a42';
+          X.fillStyle = pal.gridLight;
           X.fillRect(px, py, 20, 1);
           X.fillRect(px, py, 1, 20);
-          X.fillStyle = '#141220';
+          X.fillStyle = pal.gridDark;
           X.fillRect(px, py + 19, 20, 1);
           X.fillRect(px + 19, py, 1, 20);
           if (seed === 1 || seed === 5) {
-            X.fillStyle = '#3a3352';
+            X.fillStyle = pal.speck;
             X.fillRect(px + 4, py + 5, 5, 1);
             X.fillRect(px + 9, py + 8, 4, 1);
           }
@@ -4400,33 +4564,41 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
         if (v === '2') drawEntrance(px, py);
         if (v === '3' && state.bossAlive) drawBossMarker(px, py);
         if (v === '4') drawStoneRestoration(px, py);
-        if (v === 'u') drawStairs(px, py, true);
-        if (v === 'd') drawStairs(px, py, false);
+        // 洞は下へ潜るので、奥へ続く 'u' を下り階段として描く
+        if (v === 'u') drawStairs(px, py, !d?.descend);
+        if (v === 'd') drawStairs(px, py, !!d?.descend);
         if (v === 'c') drawChest(px, py, !!openedChests()[chestKey(x, y)]);
         if (v === 'p') drawPit(px, py);
+        if (v === 'g') drawGlowMoss(px, py);
       }
-    [
-      [0, 9],
-      [15, 9],
-      [0, 5],
-      [15, 5],
-      [0, 1],
-      [15, 1],
-    ].forEach((p, i) => drawTorch(p[0] * T, p[1] * T, i));
+    if (pal.torch)
+      [
+        [0, 9],
+        [15, 9],
+        [0, 5],
+        [15, 5],
+        [0, 1],
+        [15, 1],
+      ].forEach((p, i) => drawTorch(p[0] * T, p[1] * T, i));
     // 何階にいるかを常に出しておく
-    X.fillStyle = '#0c0916cc';
-    X.fillRect(W - 52, 3, 49, 14);
-    X.strokeStyle = '#8f7bd6';
-    X.lineWidth = 1;
-    X.strokeRect(W - 51.5, 3.5, 48, 13);
-    X.fillStyle = '#e6d9ff';
-    X.font = 'bold 10px monospace';
-    X.textAlign = 'center';
-    X.fillText(currentFloor() + ' / ' + TOWER_FLOORS + ' F', W - 27, 13);
+    drawFloorBadge(pal);
     X.textAlign = 'left';
     X.fillStyle = '#0003';
     X.fillRect(0, 0, W, 5);
     X.fillRect(0, H - 4, W, 4);
+  }
+  // 何階にいるかは常に読めるようにしておく（暗い階では闇の上に描き直す）
+  function drawFloorBadge(pal) {
+    X.fillStyle = pal.panel;
+    X.fillRect(W - 52, 3, 49, 14);
+    X.strokeStyle = pal.border;
+    X.lineWidth = 1;
+    X.strokeRect(W - 51.5, 3.5, 48, 13);
+    X.fillStyle = pal.text;
+    X.font = 'bold 10px monospace';
+    X.textAlign = 'center';
+    X.fillText(floorLabel(), W - 27, 13);
+    X.textAlign = 'left';
   }
   function drawStairs(px, py, up) {
     X.fillStyle = '#15111f';
@@ -4464,6 +4636,47 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
     X.fillRect(px + 3, py + 16, 14, 1);
     X.fillStyle = '#ffeaa8';
     X.fillRect(px + 4, py + 7, 3, 1);
+  }
+  // 光苔。踏むと洞がしばらく明るくなる
+  function drawGlowMoss(px, py) {
+    let lit = (state.moss || 0) > 0,
+      t = performance.now() / 620;
+    X.save();
+    X.globalAlpha = lit ? 0.28 : 0.5 + Math.sin(t) * 0.12;
+    X.fillStyle = '#7bffd8';
+    X.beginPath();
+    X.ellipse(px + 10, py + 11, 6.5, 5, 0, 0, Math.PI * 2);
+    X.fill();
+    X.restore();
+    X.fillStyle = lit ? '#2f5f55' : '#a9ffe6';
+    X.fillRect(px + 6, py + 9, 3, 3);
+    X.fillRect(px + 11, py + 12, 3, 3);
+    X.fillRect(px + 9, py + 6, 2, 2);
+  }
+  // 暗い階では、灯りの届く範囲だけを残して塗りつぶす。
+  // 光苔を踏んでいる間は視界が洞ぜんたいに広がる。
+  function drawDarkness() {
+    let d = dungeon(),
+      radius = d?.dark?.[currentFloor()];
+    if (!radius || state.mode !== 'field') return;
+    let lit = (state.moss || 0) > 0,
+      r = (lit ? radius + 5.5 : radius) * T,
+      cx = state.x * T + 10,
+      cy = state.y * T + 10,
+      grad = X.createRadialGradient(cx, cy, r * 0.35, cx, cy, r);
+    grad.addColorStop(0, 'rgba(4,7,9,0)');
+    grad.addColorStop(0.62, 'rgba(4,7,9,0.72)');
+    grad.addColorStop(1, lit ? 'rgba(4,7,9,0.93)' : 'rgba(4,7,9,0.985)');
+    X.fillStyle = grad;
+    X.fillRect(0, 0, W, H);
+    if (lit) {
+      X.fillStyle = '#7bffd8';
+      X.globalAlpha = 0.05;
+      X.fillRect(0, 0, W, H);
+      X.globalAlpha = 1;
+    }
+    drawFloorBadge(FLOOR_PALETTE[d.theme] || FLOOR_PALETTE.tower);
+    X.textAlign = 'left';
   }
   function drawPit(px, py) {
     X.fillStyle = '#07050c';
@@ -5437,7 +5650,8 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
       hit = state.enemyHitFx?.p || 0,
       targetScale = (group ? 0.7 : 1) * (state.enemyScale || 1) * (1 + Math.sin(Math.PI * hit) * 0.1),
       targetX = 235 + (state.enemyShift || 0) + (state.enemyMotion || 0) + Math.sin(Math.PI * hit) * 24;
-    if (state.chapter === 3) drawSkyTowerBattleBackdrop();
+    if (state.chapter === 5) drawCaveBattleBackdrop();
+    else if (state.chapter === 3) drawSkyTowerBattleBackdrop();
     else if (state.chapter === 2) drawForestBattleBackdrop();
     else drawStoneBattleBackdrop();
     if (state.battleDim) {
@@ -5476,7 +5690,14 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
     drawBattleMotionFx();
     X.fillStyle = '#080b13ee';
     X.fillRect(153, 10, 157, 31);
-    X.strokeStyle = state.chapter === 3 ? '#66dff2' : state.chapter === 2 ? '#9f8ac9' : '#aab3c4';
+    X.strokeStyle =
+      state.chapter === 5
+        ? '#5fd6c0'
+        : state.chapter === 3
+          ? '#66dff2'
+          : state.chapter === 2
+            ? '#9f8ac9'
+            : '#aab3c4';
     X.strokeRect(153, 10, 157, 31);
     X.fillStyle = '#fff';
     X.font = e.name.length > 7 ? '10px monospace' : '12px monospace';
@@ -5484,11 +5705,13 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
     X.fillStyle = '#371719';
     X.fillRect(162, 34, 138, 4);
     X.fillStyle = e.boss
-      ? state.chapter === 3
-        ? '#55e8ff'
-        : state.chapter === 2
-          ? '#bd5cff'
-          : '#f65045'
+      ? state.chapter === 5
+        ? '#ff5f95'
+        : state.chapter === 3
+          ? '#55e8ff'
+          : state.chapter === 2
+            ? '#bd5cff'
+            : '#f65045'
       : '#69df79';
     X.fillRect(162, 34, (138 * e.hp) / e.maxHp, 4);
   }
@@ -5604,6 +5827,68 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
     for (let i = 0; i < 10; i++) {
       X.fillStyle = i % 2 ? '#d9ffff' : '#ffe8a1';
       X.fillRect(9 + i * 34, 52 + (i % 4) * 19, 2, 2);
+    }
+  }
+  // 第5章「深淵の洞」: 鍾乳石の天井と、床に走る紅い地脈
+  function drawCaveBattleBackdrop() {
+    let g = X.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, '#05080a');
+    g.addColorStop(0.55, '#131c20');
+    g.addColorStop(1, '#080405');
+    X.fillStyle = g;
+    X.fillRect(0, 0, W, H);
+    // 天井から垂れる鍾乳石
+    for (let x = -14; x < 340; x += 27) {
+      let len = 26 + ((x * 7) % 34),
+        w = 9 + ((x * 3) % 7);
+      X.fillStyle = (x / 27) % 2 ? '#1d272b' : '#232f34';
+      X.beginPath();
+      X.moveTo(x, 0);
+      X.lineTo(x + w, 0);
+      X.lineTo(x + w / 2, len);
+      X.fill();
+      X.fillStyle = '#3b4c53';
+      X.fillRect(x + 1, 0, 2, len * 0.45);
+    }
+    // 奥の岩壁
+    X.fillStyle = '#101819';
+    for (let x = -30; x < 340; x += 64) {
+      X.beginPath();
+      X.moveTo(x, 172);
+      X.lineTo(x + 30, 96 + (x % 128 ? 18 : 0));
+      X.lineTo(x + 60, 172);
+      X.fill();
+    }
+    // 地脈。岩の割れ目から紅い光が漏れる
+    X.save();
+    X.globalCompositeOperation = 'lighter';
+    for (let i = 0; i < 6; i++) {
+      let x = 18 + i * 56,
+        pulse = 0.32 + Math.sin(performance.now() / 700 + i) * 0.16;
+      X.fillStyle = 'rgba(224,64,122,' + pulse.toFixed(3) + ')';
+      X.fillRect(x, 120 + (i % 3) * 16, 3, 34 - (i % 3) * 8);
+      X.fillRect(x - 6, 150 + (i % 2) * 10, 22, 2);
+    }
+    X.restore();
+    // 床
+    X.fillStyle = '#1a2124';
+    X.fillRect(0, 172, W, 68);
+    X.fillStyle = '#232d31';
+    for (let x = 0; x < W; x += 34) X.fillRect(x + ((x / 34) % 2 ? 6 : 0), 182 + (x % 68 ? 5 : 0), 26, 6);
+    X.fillStyle = '#e0407a';
+    X.globalAlpha = 0.22;
+    X.fillRect(0, 172, W, 2);
+    X.globalAlpha = 1;
+    // 石筍
+    for (let i = 0; i < 5; i++) {
+      let x = 12 + i * 74,
+        h = 18 + ((i * 11) % 16);
+      X.fillStyle = '#222c30';
+      X.beginPath();
+      X.moveTo(x, 176);
+      X.lineTo(x + 11, 176);
+      X.lineTo(x + 5, 176 - h);
+      X.fill();
     }
   }
   function drawSwordArc(p) {
