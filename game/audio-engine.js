@@ -265,6 +265,27 @@ function saturationCurve(amount = 3) {
   return curve;
 }
 
+// 録音された効果音。合成では出せない質感はこちらを使う。
+// すべて CC0 (Kenney / Still North Media)。出典は audio/CREDITS.md。
+const SAMPLES = Object.freeze({
+  punch: ['punch_000', 'punch_001', 'punch_002', 'punch_003'],
+  metal: ['metal_000', 'metal_001', 'metal_002'],
+  plate: ['plate_000', 'plate_001', 'plate_002'],
+  mining: ['mining_000', 'mining_001', 'mining_002'],
+  slice: ['knifeslice', 'knifeslice2'],
+  chop: ['chop'],
+  swordClash: ['sword_clash'],
+  drawKnife: ['drawknife1'],
+  metalClick: ['metalclick'],
+  coins: ['handlecoins'],
+  doorOpen: ['dooropen_1'],
+  doorClose: ['doorclose_1'],
+  stepStone: ['step_concrete_000', 'step_concrete_001', 'step_concrete_002'],
+  stepGrass: ['step_grass_000', 'step_grass_001', 'step_grass_002'],
+  stepWood: ['step_wood_000', 'step_wood_001', 'step_wood_002'],
+});
+const SAMPLE_BASE = './audio/';
+
 export function trackForState(state) {
   if (!state) return 'field1';
   if (state.mode === 'over') return 'over';
@@ -289,6 +310,10 @@ export function createGameAudio({ getState, enabled = true } = {}) {
   let leadSat = null;
   let leadBus = null;
   let musicEcho = null;
+  const sampleBuffers = {};
+  const sampleFailed = {};
+  let samplesRequested = false;
+  let sampleCount = 0;
   let echoL = null,
     echoR = null,
     echoFb = null,
@@ -411,6 +436,7 @@ export function createGameAudio({ getState, enabled = true } = {}) {
       trackStep = 0;
       nextStepAt = ctx.currentTime + 0.05;
       scheduler = window.setInterval(pumpMusic, 25);
+      loadSamples();
     }
     if (ctx.state === 'suspended') ctx.resume();
     return ctx;
@@ -418,6 +444,75 @@ export function createGameAudio({ getState, enabled = true } = {}) {
 
   function bus() {
     return bgmBuses[activeBus];
+  }
+
+  // ---- 録音素材の読み込みと再生 ----
+  // 読み込みは最初の操作のあとに始まる。届くまでは合成側だけが鳴るので、
+  // 読み込み中でも無音にはならない。
+  function loadSamples() {
+    if (!ctx || samplesRequested) return;
+    samplesRequested = true;
+    const names = [];
+    Object.values(SAMPLES).forEach(list => list.forEach(n => names.push(n)));
+    [...new Set(names)].forEach(name => {
+      fetch(SAMPLE_BASE + name + '.ogg')
+        .then(r => (r.ok ? r.arrayBuffer() : Promise.reject(new Error(String(r.status)))))
+        .then(buf => ctx.decodeAudioData(buf))
+        .then(decoded => {
+          sampleBuffers[name] = decoded;
+          sampleCount += 1;
+        })
+        .catch(() => {
+          sampleFailed[name] = true;
+        });
+    });
+  }
+
+  function haveSample(key) {
+    const list = SAMPLES[key];
+    if (!list) return false;
+    return list.some(n => sampleBuffers[n]);
+  }
+
+  // 録音素材を鳴らす。鳴らせたら true を返す。
+  function playSample(
+    key,
+    { gain = 0.5, when = 0, rate = 1, pan = 0, verb = 0, fade = 0, bus: target = null } = {},
+  ) {
+    if (!ensure()) return false;
+    const list = SAMPLES[key];
+    if (!list) return false;
+    const ready = list.filter(n => sampleBuffers[n]);
+    if (!ready.length) return false;
+    const buffer = sampleBuffers[ready[(Math.random() * ready.length) | 0]];
+    const start = ctx.currentTime + when;
+    const src = ctx.createBufferSource();
+    const out = ctx.createGain();
+    src.buffer = buffer;
+    src.playbackRate.value = Math.max(0.25, rate);
+    out.gain.value = Math.max(0, gain);
+    // 実録素材は余韻が長いものがある。連打で滲むので fade で尾を刈る。
+    if (fade > 0) {
+      out.gain.setValueAtTime(Math.max(0.0002, gain), start);
+      out.gain.exponentialRampToValueAtTime(0.0001, start + fade);
+    }
+    let tail = out;
+    if (pan) {
+      const p = ctx.createStereoPanner();
+      p.pan.value = Math.max(-1, Math.min(1, pan));
+      out.connect(p);
+      tail = p;
+    }
+    src.connect(out);
+    tail.connect(target || punchBus || sfxBus);
+    if (verb > 0 && roomSend) {
+      const v = ctx.createGain();
+      v.gain.value = verb;
+      tail.connect(v).connect(roomSend);
+    }
+    src.start(start);
+    if (fade > 0) src.stop(start + fade + 0.02);
+    return true;
   }
 
   function setEnabled(value) {
@@ -610,6 +705,46 @@ export function createGameAudio({ getState, enabled = true } = {}) {
       v.gain.value = verb;
       panner.connect(v).connect(reverb);
     }
+  }
+
+  // ---- 録音素材 + 合成サブ の複合打撃 ----
+  // 録音は質感と立ち上がりを担当し、低域が足りないぶんを合成のサブで足す。
+  // 素材が未読込のときは合成側(impact)だけで鳴らすので無音にはならない。
+  function sampledHit({
+    keys = ['punch'],
+    when = 0,
+    power = 1,
+    rate = 1,
+    pan = 0,
+    verb = 0.3,
+    fade = 0,
+    sub = 58,
+    subLen = 0.12,
+    subGain = 0.5,
+    fallback = null,
+  }) {
+    if (!ensure()) return false;
+    let played = false;
+    for (const key of keys) {
+      if (playSample(key, { gain: 0.95 * power, when, rate, pan, verb, fade })) {
+        played = true;
+        break;
+      }
+    }
+    if (!played && typeof fallback === 'function') fallback();
+    if (sub > 0) {
+      oscillator({
+        frequency: sub * 1.5,
+        endFrequency: sub * 0.8,
+        duration: subLen,
+        type: 'sine',
+        gain: subGain * power,
+        attack: 0.001,
+        when,
+        bus: punchBus || sfxBus,
+      });
+    }
+    return played;
   }
 
   // ---- 打撃の芯 ----
@@ -1702,128 +1837,90 @@ export function createGameAudio({ getState, enabled = true } = {}) {
     }
 
     if (kind === 'blade' || kind === 'slash') {
-      // 振り抜く風切り(高域を下げながら)
+      // 振り抜く風切り
       noiseBurst({
-        duration: 0.13,
-        gain: 0.2,
+        duration: 0.12,
+        gain: 0.17,
         frequency: 9000,
-        frequencyEnd: 1800,
+        frequencyEnd: 1900,
         type: 'highpass',
         attack: 0.004,
         when: 0,
         pan: -0.25,
       });
-      // 刃が当たる瞬間
-      impact({
-        when: 0.055,
-        power: 1.05,
-        tone: 1.6,
-        body: 320,
-        sub: 66,
-        click: 8600,
-        noiseLen: 0.11,
-        weight: 0.62,
-      });
-      // 金属の鳴き。フィルターを閉じながら落とす
-      voice({
-        frequency: 2100,
-        endFrequency: 620,
-        duration: 0.2,
-        type: 'sawtooth',
-        gain: 0.1,
-        attack: 0.001,
-        sustain: 0.3,
-        cutoff: 9000,
-        cutoffEnd: 1400,
-        resonance: 9,
-        when: 0.055,
-        bus: sfxBus,
-        pan: 0.2,
+      // 刃が当たる瞬間: 実録の刃鳴りを主役に
+      sampledHit({
+        keys: ['swordClash', 'slice', 'metal'],
+        when: 0.05,
+        power: 1.0,
+        fade: 0.3,
+        rate: 1.05 + Math.random() * 0.12,
+        pan: 0.12,
         verb: 0.3,
+        sub: 62,
+        subLen: 0.075,
+        subGain: 0.26,
+        fallback: () =>
+          impact({
+            when: 0.05,
+            power: 1.05,
+            tone: 1.6,
+            body: 320,
+            sub: 0,
+            click: 8600,
+            noiseLen: 0.11,
+            weight: 0.62,
+          }),
       });
     } else if (kind === 'normalImpact' || kind === 'hit') {
-      impact({
-        power: 1.2,
-        tone: 0.95,
-        body: 235,
-        sub: 58,
-        click: 6000,
-        noiseLen: 0.2,
+      sampledHit({
+        keys: ['punch', 'plate'],
+        power: 1.05,
+        fade: 0.26,
+        rate: 0.9 + Math.random() * 0.12,
         verb: 0.3,
-        weight: 1.25,
+        sub: 56,
+        subLen: 0.15,
+        subGain: 0.62,
+        fallback: () =>
+          impact({ power: 1.2, tone: 0.95, body: 235, sub: 0, click: 6000, noiseLen: 0.2, weight: 1.25 }),
       });
-      // 骨に響くような低い唸りを足す
-      voice({
-        frequency: 190,
-        endFrequency: 58,
-        duration: 0.26,
-        type: 'square',
-        gain: 0.11,
-        attack: 0.001,
-        sustain: 0.25,
-        cutoff: 1600,
-        cutoffEnd: 220,
-        resonance: 7,
-        when: 0.004,
-        bus: sfxBus,
-      });
+      // 追い打ちの短い胴鳴りで厚みを出す
+      playSample('plate', { gain: 0.4, when: 0.012, rate: 0.82, pan: 0.2, verb: 0.2, fade: 0.22 });
     } else if (kind === 'staffSwing') {
       noiseBurst({ duration: 0.11, gain: 0.095, frequency: 2100, type: 'highpass' });
       oscillator({ frequency: 520, endFrequency: 250, duration: 0.1, type: 'triangle', gain: 0.045 });
     } else if (kind === 'staffImpact') {
-      impact({
-        power: 1.05,
-        tone: 0.78,
-        body: 195,
-        sub: 54,
-        click: 4400,
-        noiseLen: 0.18,
+      sampledHit({
+        keys: ['chop', 'plate'],
+        power: 0.95,
+        fade: 0.24,
+        rate: 0.85 + Math.random() * 0.1,
         verb: 0.28,
-        weight: 1.15,
-      });
-      voice({
-        frequency: 520,
-        endFrequency: 150,
-        duration: 0.22,
-        type: 'triangle',
-        gain: 0.09,
-        attack: 0.002,
-        sustain: 0.3,
-        cutoff: 3000,
-        cutoffEnd: 500,
-        resonance: 8,
-        when: 0.005,
-        bus: sfxBus,
-        verb: 0.25,
+        sub: 52,
+        subLen: 0.14,
+        subGain: 0.5,
+        fallback: () =>
+          impact({ power: 1.05, tone: 0.78, body: 195, sub: 0, click: 4400, noiseLen: 0.18, weight: 1.15 }),
       });
     } else if (kind === 'dash' || kind === 'returnDash') {
       noiseBurst({ duration: 0.2, gain: 0.09, frequency: 2600, type: 'highpass' });
       oscillator({ frequency: 720, endFrequency: 1280, duration: 0.13, type: 'triangle', gain: 0.035 });
     } else if (kind === 'enemy') {
-      impact({
-        power: 1.1,
-        tone: 0.58,
-        body: 150,
-        sub: 44,
-        click: 3000,
-        noiseLen: 0.22,
+      // 被弾は一番重く、少し暗く
+      sampledHit({
+        keys: ['punch', 'plate'],
+        power: 1.15,
+        fade: 0.32,
+        rate: 0.74 + Math.random() * 0.08,
         verb: 0.28,
-        weight: 1.35,
+        sub: 44,
+        subLen: 0.19,
+        subGain: 0.72,
+        fallback: () =>
+          impact({ power: 1.1, tone: 0.58, body: 150, sub: 0, click: 3000, noiseLen: 0.22, weight: 1.35 }),
       });
-      voice({
-        frequency: 240,
-        endFrequency: 62,
-        duration: 0.3,
-        type: 'sawtooth',
-        gain: 0.085,
-        attack: 0.003,
-        sustain: 0.3,
-        cutoff: 1500,
-        cutoffEnd: 200,
-        resonance: 6,
-        when: 0.006,
-        bus: sfxBus,
-      });
+      playSample('mining', { gain: 0.34, when: 0.015, rate: 0.7, pan: -0.18, verb: 0.22, fade: 0.3 });
     } else if (kind === 'heal') {
       [72, 76, 79, 84].forEach((note, i) =>
         oscillator({
@@ -1870,17 +1967,31 @@ export function createGameAudio({ getState, enabled = true } = {}) {
         attack: 0.05,
         when: 0,
       });
-      impact({
+      // 実録を重ねて「ドガッ」の質量を出す
+      sampledHit({
+        keys: ['mining', 'punch'],
         when: 0.06,
-        power: 1.9,
-        tone: 1.25,
-        body: 300,
-        sub: 46,
-        click: 9000,
-        noiseLen: 0.3,
-        verb: 0.55,
-        weight: 1.4,
+        power: 1.4,
+        rate: 0.72,
+        verb: 0.5,
+        fade: 0.45,
+        sub: 40,
+        subLen: 0.3,
+        subGain: 0.95,
+        fallback: () =>
+          impact({
+            when: 0.06,
+            power: 1.9,
+            tone: 1.25,
+            body: 300,
+            sub: 0,
+            click: 9000,
+            noiseLen: 0.3,
+            weight: 1.4,
+          }),
       });
+      playSample('metal', { gain: 0.6, when: 0.072, rate: 0.85, pan: -0.35, verb: 0.4, fade: 0.35 });
+      playSample('swordClash', { gain: 0.5, when: 0.062, rate: 0.9, pan: 0.35, verb: 0.4, fade: 0.4 });
       // 三層の金属の悲鳴を左右に振る
       [
         [1180, -0.4],
@@ -2060,10 +2171,20 @@ export function createGameAudio({ getState, enabled = true } = {}) {
       oscillator({ frequency: 310, endFrequency: 155, duration: 0.17, type: 'triangle', gain: 0.04 });
 
       // ---------- ここから追加の効果音 ----------
-    } else if (kind === 'step' || kind === 'step1' || kind === 'step2' || kind === 'step3') {
-      // 足音: 章ごとに床の質感を変える(石/土/石畳)
-      const variant = kind === 'step2' ? 2 : kind === 'step3' ? 3 : kind === 'step4' ? 4 : 1;
+    } else if (
+      kind === 'step' ||
+      kind === 'step1' ||
+      kind === 'step2' ||
+      kind === 'step3' ||
+      kind === 'step4'
+    ) {
+      // 章ごとに床の質感を変える。実録素材があればそちらを優先する。
+      const ground = kind === 'step2' ? 'stepGrass' : kind === 'step4' ? 'stepWood' : 'stepStone';
       const jitter = 0.9 + Math.random() * 0.2;
+      if (playSample(ground, { gain: 0.42, rate: jitter, pan: (Math.random() - 0.5) * 0.3, verb: 0.12 })) {
+        return;
+      }
+      const variant = kind === 'step2' ? 2 : kind === 'step3' ? 3 : kind === 'step4' ? 4 : 1;
       if (variant === 2) {
         noiseBurst({
           duration: 0.07,
@@ -2074,17 +2195,7 @@ export function createGameAudio({ getState, enabled = true } = {}) {
           curve: 2.4,
         });
         oscillator({ frequency: 138 * jitter, endFrequency: 82, duration: 0.06, type: 'sine', gain: 0.022 });
-      } else if (variant === 3) {
-        noiseBurst({ duration: 0.055, gain: 0.03, frequency: 2400 * jitter, type: 'bandpass', q: 1.4 });
-        oscillator({
-          frequency: 320 * jitter,
-          endFrequency: 170,
-          duration: 0.05,
-          type: 'triangle',
-          gain: 0.02,
-        });
       } else if (variant === 4) {
-        // 塔の石段: 硬い足音に短い残響がつく
         noiseBurst({ duration: 0.05, gain: 0.03, frequency: 1900 * jitter, type: 'bandpass', q: 1.7 });
         oscillator({
           frequency: 240 * jitter,
@@ -2092,14 +2203,6 @@ export function createGameAudio({ getState, enabled = true } = {}) {
           duration: 0.06,
           type: 'triangle',
           gain: 0.024,
-        });
-        noiseBurst({
-          duration: 0.16,
-          gain: 0.008,
-          frequency: 3400,
-          type: 'highpass',
-          when: 0.03,
-          curve: 2.2,
         });
       } else {
         noiseBurst({ duration: 0.06, gain: 0.032, frequency: 1500 * jitter, type: 'bandpass', q: 1.1 });
@@ -2162,6 +2265,7 @@ export function createGameAudio({ getState, enabled = true } = {}) {
         }),
       );
     } else if (kind === 'itemGet') {
+      playSample('coins', { gain: 0.55, rate: 1.0, verb: 0.2 });
       // 戦利品の入手ジングル
       [72, 76, 79, 84].forEach((note, i) => {
         oscillator({ frequency: midi(note), duration: 0.13, type: 'triangle', gain: 0.05, when: i * 0.058 });
@@ -2340,6 +2444,10 @@ export function createGameAudio({ getState, enabled = true } = {}) {
     // 計測用: OfflineAudioContext では時間が自動で進まないため、
     // スケジューラを外から回せるようにしておく
     pump: pumpMusic,
+    get samplesLoaded() {
+      return sampleCount;
+    },
+    hasSample: haveSample,
     ensure,
     setEnabled,
     setVolumes,
