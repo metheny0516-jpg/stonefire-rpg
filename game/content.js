@@ -171,13 +171,16 @@ export const ENEMIES = Object.freeze({
   golum: Object.freeze({ name: "晶殻のゴルム", maxHp: 105, atk: 22, def: 12, spd: 5, exp: 50, gold: 30, color: "#6ee7ff", behavior: "crystal", drops: [{ id: "skyCrystal", chance: 0.35 }] }),
   zepha: Object.freeze({ name: "風喰いゼファ", maxHp: 88, atk: 24, def: 8, spd: 17, exp: 54, gold: 32, color: "#55e0c6", behavior: "gale", drops: [{ id: "windSilk", chance: 0.35 }] }),
   boss3: Object.freeze({ name: "天穿のオルディア", maxHp: 330, atk: 30, def: 15, spd: 14, exp: 210, gold: 300, color: "#64dcff", boss: true, behavior: "astralBoss", drops: [{ id: "astralCore", chance: 1 }] }),
-  rust: Object.freeze({ name: "錆喰い", maxHp: 120, atk: 26, def: 10, spd: 7, exp: 62, gold: 34, color: "#b07a4a", behavior: "spore", drops: [{ id: "nightFeather", chance: 0.4 }] }),
-  emberEcho: Object.freeze({ name: "灯の残響", maxHp: 100, atk: 28, def: 8, spd: 12, exp: 58, gold: 30, color: "#ffb45c", behavior: "swift", drops: [{ id: "shadowFang", chance: 0.36 }] }),
-  mirror: Object.freeze({ name: "鏡写しのイド", maxHp: 140, atk: 31, def: 13, spd: 13, exp: 78, gold: 44, color: "#9fd0ff", behavior: "drain", drops: [{ id: "skyCrystal", chance: 0.34 }] }),
-  sandMoth: Object.freeze({ name: "砂時計蛾", maxHp: 115, atk: 34, def: 9, spd: 16, exp: 74, gold: 40, color: "#e5d6a0", behavior: "gale", drops: [{ id: "windSilk", chance: 0.38 }] }),
-  warden: Object.freeze({ name: "黄昏の衛士", maxHp: 175, atk: 38, def: 17, spd: 10, exp: 96, gold: 58, color: "#8f7bd6", behavior: "crystal", drops: [{ id: "skyCrystal", chance: 0.42 }] }),
-  silentArm: Object.freeze({ name: "静寂の腕", maxHp: 150, atk: 42, def: 12, spd: 15, exp: 92, gold: 54, color: "#6b6f8c", behavior: "charge", drops: [{ id: "shadowFang", chance: 0.44 }] }),
-  boss4: Object.freeze({ name: "黄昏のヴェスペル", maxHp: 480, atk: 46, def: 20, spd: 15, exp: 330, gold: 520, color: "#d08bff", boss: true, behavior: "astralBoss", drops: [{ id: "duskBell", chance: 1 }] }),
+  // --- 第4章「黄昏の塔」1階 ---
+  rust: Object.freeze({ name: "錆喰いネズミ", maxHp: 210, atk: 44, def: 12, spd: 14, exp: 110, gold: 52, color: "#8a7a68", art: 0.85, behavior: "swift", drops: [{ id: "nightFeather", chance: 0.42 }] }),
+  emberEcho: Object.freeze({ name: "灯の残響", maxHp: 190, atk: 46, def: 10, spd: 11, exp: 115, gold: 56, color: "#4fb8ff", art: 0.78, behavior: "drain", drops: [{ id: "shadowFang", chance: 0.36 }] }),
+  // --- 2階 ---
+  warden: Object.freeze({ name: "朽ちた衛士", maxHp: 330, atk: 50, def: 26, spd: 8, exp: 165, gold: 82, color: "#9a8f84", art: 1.0, behavior: "crystal", drops: [{ id: "skyCrystal", chance: 0.38 }] }),
+  cinderPede: Object.freeze({ name: "熾火ムカデ", maxHp: 250, atk: 54, def: 14, spd: 17, exp: 155, gold: 76, color: "#ff7a2e", art: 0.95, behavior: "gale", drops: [{ id: "windSilk", chance: 0.4 }] }),
+  // --- 3階。ゴーレムは雑魚とは思えない硬さと火力を持つ ---
+  runeGolem: Object.freeze({ name: "紅印のゴーレム", maxHp: 470, atk: 54, def: 34, spd: 6, exp: 260, gold: 130, color: "#c8492f", art: 1.3, behavior: "crystal", drops: [{ id: "skyCrystal", chance: 0.5 }] }),
+  voidMaw: Object.freeze({ name: "虚無喰らいのイド", maxHp: 380, atk: 55, def: 16, spd: 16, exp: 205, gold: 104, color: "#8a3fd0", art: 1.05, behavior: "drain", drops: [{ id: "shadowFang", chance: 0.46 }] }),
+  boss4: Object.freeze({ name: "黄昏のヴェスペル", maxHp: 900, atk: 50, def: 32, spd: 15, exp: 700, gold: 900, color: "#d08bff", boss: true, behavior: "astralBoss", drops: [{ id: "duskBell", chance: 1 }] }),
 });
 
 export const ENCOUNTERS = Object.freeze({
@@ -193,23 +196,23 @@ export const SKILLS = Object.freeze([
   // ルカ: たたかう(=1.0倍)を基準に、段数・全体化・防御無視で役割を分ける
   Object.freeze({ id: "crescent", owner: "hero", name: "三日月返し", lv: 2, uses: 3, power: 1.3, hits: 2, kind: "slash", motion: "crescent", desc: "二段斬り 威力1.3倍", spark: ["attack", "guard"] }),
   Object.freeze({ id: "starfire", owner: "hero", name: "星火斬り", lv: 3, uses: 2, power: 1.6, kind: "fire", motion: "starfire", desc: "炎の斬撃 威力1.6倍", spark: ["attack", "wait"] }),
-  Object.freeze({ id: "healing", owner: "hero", name: "光の癒し", lv: 3, uses: 1, heal: 18, kind: "heal", motion: "heal", desc: "仲間1人のHPを18回復", spark: ["guard", "wait"] }),
+  Object.freeze({ id: "healing", owner: "hero", name: "光の癒し", lv: 3, uses: 1, heal: 18, rate: 0.25, kind: "heal", motion: "heal", desc: "仲間1人を回復（最大HPの25%）", spark: ["guard", "wait"] }),
   Object.freeze({ id: "whirlblade", owner: "hero", name: "断空円舞", lv: 4, uses: 2, power: 0.95, target: "all", kind: "slash", motion: "whirl", desc: "敵全体 威力0.95倍", spark: ["attack", "guard"] }),
   Object.freeze({ id: "armorbreak", owner: "hero", name: "鎧断ち", lv: 5, uses: 2, power: 1.45, ignoreDef: true, kind: "slash", motion: "pierce", desc: "防御無視 威力1.45倍", spark: ["attack", "wait"] }),
   Object.freeze({ id: "dawnblade", owner: "hero", name: "暁天一閃", lv: 6, uses: 1, power: 2.2, kind: "fire", motion: "starfire", desc: "渾身の一閃 威力2.2倍", spark: ["wait"] }),
   Object.freeze({ id: "tenfang", owner: "hero", name: "牙断ち乱れ", lv: 7, uses: 1, power: 1.95, hits: 3, kind: "slash", motion: "crescent", desc: "三段斬り 威力1.95倍", spark: ["attack"] }),
   // ミナ
-  Object.freeze({ id: "moonheal", owner: "mage", name: "月雫の癒し", lv: 1, uses: 2, heal: 18, kind: "moonheal", motion: "moonheal", desc: "仲間1人のHPを18回復", spark: ["guard", "wait"] }),
+  Object.freeze({ id: "moonheal", owner: "mage", name: "月雫の癒し", lv: 1, uses: 2, heal: 18, rate: 0.22, kind: "moonheal", motion: "moonheal", desc: "仲間1人を回復（最大HPの25%）", spark: ["guard", "wait"] }),
   Object.freeze({ id: "frostmoon", owner: "mage", name: "氷月弾", lv: 3, uses: 3, power: 1.4, kind: "moon", motion: "moon", desc: "冷気の魔弾 威力1.4倍", spark: ["attack", "guard"] }),
   Object.freeze({ id: "starshower", owner: "mage", name: "星屑の雨", lv: 4, uses: 2, power: 0.9, target: "all", kind: "moon", motion: "starshower", desc: "敵全体 威力0.9倍", spark: ["attack", "wait"] }),
-  Object.freeze({ id: "moonveil", owner: "mage", name: "月光の護り", lv: 5, uses: 1, healAll: 14, kind: "moonheal", motion: "moonveil", desc: "仲間全員のHPを14回復", spark: ["guard", "wait"] }),
+  Object.freeze({ id: "moonveil", owner: "mage", name: "月光の護り", lv: 5, uses: 1, healAll: 14, rate: 0.2, kind: "moonheal", motion: "moonveil", desc: "仲間全員を回復（最大HPの20%）", spark: ["guard", "wait"] }),
   Object.freeze({ id: "starfall", owner: "mage", name: "星降り", lv: 6, uses: 1, power: 2.1, kind: "moon", motion: "starfall", desc: "星光の大魔法 威力2.1倍", spark: ["wait"] }),
 ]);
 
 export const ITEMS = Object.freeze({
-  potion: Object.freeze({ name: "くすり", icon: "◆", desc: "仲間1人のHPを18回復", usable: true, heal: 18, price: 20, sell: 8 }),
-  moonDrop: Object.freeze({ name: "月のしずく", icon: "☾", desc: "仲間全員のHPを12回復", usable: true, healAll: 12, price: 60, sell: 24 }),
-  starTonic: Object.freeze({ name: "星雫の霊薬", icon: "✧", desc: "仲間全員のHPを30回復（合成でしか作れない）", usable: true, healAll: 30, sell: 60 }),
+  potion: Object.freeze({ name: "くすり", icon: "◆", desc: "仲間1人のHPを回復（最大HPの22%／最低18）", usable: true, heal: 18, rate: 0.22, price: 20, sell: 8 }),
+  moonDrop: Object.freeze({ name: "月のしずく", icon: "☾", desc: "仲間全員のHPを回復（最大HPの18%／最低12）", usable: true, healAll: 12, rate: 0.18, price: 60, sell: 24 }),
+  starTonic: Object.freeze({ name: "星雫の霊薬", icon: "✧", desc: "全員を回復（最大HPの35%）。合成でしか作れない", usable: true, healAll: 30, rate: 0.35, sell: 60 }),
   nightFeather: Object.freeze({ name: "夜羽", icon: "♢", desc: "ヨルハネが落とす黒紫の羽", sell: 12 }),
   flameHorn: Object.freeze({ name: "焔角の欠片", icon: "▲", desc: "焔角のガルドを倒した証", sell: 180, precious: true }),
   shadowFang: Object.freeze({ name: "影牙のかけら", icon: "†", desc: "冷たい魔力を帯びた牙", sell: 24 }),
@@ -237,12 +240,12 @@ export const ASSETS = Object.freeze({
     golum: "./enemy-crystal-golum.png",
     zepha: "./enemy-wind-zepha.png",
     boss3: "./enemy-sky-boss-ordia.png",
-    rust: "./enemy-rust.png",
-    emberEcho: "./enemy-ember-echo.png",
-    mirror: "./enemy-mirror-id.png",
-    sandMoth: "./enemy-sand-moth.png",
-    warden: "./enemy-dusk-warden.png",
-    silentArm: "./enemy-silent-arm.png",
+    rust: "./enemy-rust-rat.png",
+    emberEcho: "./enemy-soul-lantern.png",
+    warden: "./enemy-rusted-knight.png",
+    cinderPede: "./enemy-cinder-pede.png",
+    runeGolem: "./enemy-rune-golem.png",
+    voidMaw: "./enemy-void-maw.png",
     boss4: "./enemy-dusk-boss-vesper.png",
   }),
 });
@@ -320,8 +323,8 @@ export const TOWER_MAPS = Object.freeze({
 // 階ごとに出る魔物を入れ替える (2種ずつ)
 export const TOWER_ENCOUNTERS = Object.freeze({
   1: Object.freeze(["rust", "emberEcho"]),
-  2: Object.freeze(["mirror", "sandMoth"]),
-  3: Object.freeze(["warden", "silentArm"]),
+  2: Object.freeze(["warden", "cinderPede"]),
+  3: Object.freeze(["runeGolem", "voidMaw"]),
 });
 // 宝箱の中身。"階:x,y" で引く。
 export const TOWER_CHESTS = Object.freeze({
