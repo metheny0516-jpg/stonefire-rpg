@@ -39,7 +39,7 @@ import {
   writeActiveSlot,
   writeSlot,
 } from './save-store.js';
-import { createGameAudio } from './audio-engine.js?v=46-boss-art';
+import { createGameAudio } from './audio-engine.js?v=47-travel-fix';
 (() => {
   'use strict';
   const C = document.querySelector('#game'),
@@ -473,6 +473,7 @@ import { createGameAudio } from './audio-engine.js?v=46-boss-art';
       playMs: Math.max(0, Number(d.playMs) || 0),
     };
     playAnchor = performance.now();
+    noteChapterReached(state.chapter);
     writeActiveSlot(state.slot);
   }
   function reset() {
@@ -803,10 +804,31 @@ import { createGameAudio } from './audio-engine.js?v=46-boss-art';
     if (!state.storyFlags.clearedChapters) state.storyFlags.clearedChapters = {};
     return state.storyFlags.clearedChapters;
   }
+  // 到達したことのある一番奥の章。旅の解錠はこれを基準にする。
+  // 現在の章を基準にすると、前の章へ戻った瞬間に先の章が施錠され、
+  // しかも討伐済みのボスは倒し直せないので永久に戻れなくなる。
+  function maxChapterReached() {
+    if (!state.storyFlags || typeof state.storyFlags !== 'object') state.storyFlags = {};
+    let recorded = Number(state.storyFlags.maxChapter) || 0;
+    return Math.max(1, Math.min(MAX_CHAPTER, recorded));
+  }
+  // 章に到達したことを記録する。第N章にいるということは第N-1章までは
+  // 攻略済みなので、記録が無い古いセーブのぶんもここで補完する。
+  function noteChapterReached(chapter) {
+    let c = Number(chapter) || 1;
+    if (!CHAPTERS[c]) return;
+    if (!state.storyFlags || typeof state.storyFlags !== 'object') state.storyFlags = {};
+    let now = Number(state.storyFlags.maxChapter) || 0;
+    if (c > now) state.storyFlags.maxChapter = c;
+    let cleared = clearedChapters();
+    for (let i = 1; i < c; i++) if (!cleared[i]) cleared[i] = true;
+  }
   function chapterUnlocked(c) {
-    return c === 1 || c <= (state.chapter || 1) || !!clearedChapters()[c - 1];
+    return c === 1 || c <= maxChapterReached();
   }
   function unlockedChapters() {
+    // いま実際にいる章は、どんな経路で来ていても到達済みとして数える
+    noteChapterReached(state.chapter);
     let out = [];
     for (let c = 1; c <= MAX_CHAPTER; c++) if (CHAPTERS[c] && chapterUnlocked(c)) out.push(c);
     return out;
@@ -814,6 +836,7 @@ import { createGameAudio } from './audio-engine.js?v=46-boss-art';
   function travelTo(c) {
     let meta = CHAPTERS[c];
     if (!meta || !chapterUnlocked(c)) return;
+    noteChapterReached(state.chapter);
     state.chapter = c;
     state.mode = 'field';
     state.floor = 1;
@@ -3150,6 +3173,7 @@ import { createGameAudio } from './audio-engine.js?v=46-boss-art';
   }
   function startChapter2() {
     state.chapter = 2;
+    noteChapterReached(2);
     state.mode = 'field';
     state.x = 1;
     state.y = 10;
@@ -3179,6 +3203,7 @@ import { createGameAudio } from './audio-engine.js?v=46-boss-art';
   }
   function startChapter4() {
     state.chapter = 4;
+    noteChapterReached(4);
     state.floor = 1;
     state.mode = 'field';
     let st = CHAPTERS[4].start;
@@ -3211,6 +3236,7 @@ import { createGameAudio } from './audio-engine.js?v=46-boss-art';
   }
   function startChapter3() {
     state.chapter = 3;
+    noteChapterReached(3);
     state.mode = 'field';
     state.x = 1;
     state.y = 10;
