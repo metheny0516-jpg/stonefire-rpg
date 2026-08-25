@@ -39,7 +39,7 @@ import {
   writeActiveSlot,
   writeSlot,
 } from './save-store.js';
-import { createGameAudio } from './audio-engine.js?v=47-travel-fix';
+import { createGameAudio } from './audio-engine.js?v=48-audio-punch';
 (() => {
   'use strict';
   const C = document.querySelector('#game'),

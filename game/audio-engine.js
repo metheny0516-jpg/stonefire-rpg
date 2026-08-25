@@ -12,64 +12,64 @@ const BATTLE_BASS = Object.freeze([0, 0, 7, 0, 12, 0, 7, 5]);
 const BATTLE_KICKS = Object.freeze([0, 6, 8, 14]);
 
 const BATTLE_SETS = Object.freeze({
-  // 第1章「石牢」: Eマイナー、硬く角ばった矩形波
+  // 第1章「石牢」: Dハーモニックマイナー。短い動機の反復で押す
   1: Object.freeze({
     chords: [
-      [40, 47, 52],
-      [40, 47, 52],
+      [38, 45, 50],
+      [38, 45, 50],
+      [34, 41, 46],
       [36, 43, 48],
       [38, 45, 50],
-      [40, 47, 52],
-      [45, 52, 57],
-      [47, 54, 59],
-      [40, 47, 52],
+      [31, 38, 43],
+      [33, 40, 45],
+      [38, 45, 50],
     ],
-    A: [76, 76, 79, 83, 79, 76, 74, 71, 72, 74, 76, 79, 76, 74, 71, 67],
-    B: [83, 86, 88, 86, 83, 79, 83, 86, 84, 83, 79, 76, 79, 76, 74, 71],
-    lead: 'square',
-    counter: 'triangle',
+    A: [74, 74, 77, 81, 79, 77, 74, 72, 74, 77, 81, 84, 82, 81, 79, 77],
+    B: [86, 84, 82, 81, 79, 81, 82, 84, 81, 79, 77, 74, 77, 74, 73, 74],
+    lead: 'sawtooth',
+    counter: 'square',
     stab: 'sawtooth',
     drive: 1,
   }),
-  // 第2章「月影の森」: Dドリアン、三角波のやわらかい疾走
+  // 第2章「月影の森」: Aマイナー。滑らかに駆ける旋律
   2: Object.freeze({
     chords: [
-      [38, 45, 50],
-      [38, 45, 50],
-      [41, 48, 53],
-      [43, 50, 55],
+      [33, 40, 45],
+      [33, 40, 45],
       [36, 43, 48],
-      [41, 48, 53],
-      [43, 50, 55],
       [38, 45, 50],
+      [29, 36, 41],
+      [36, 43, 48],
+      [40, 44, 47],
+      [33, 40, 45],
     ],
-    A: [74, 77, 81, 77, 74, 72, 69, 72, 74, 77, 81, 84, 81, 77, 74, 72],
-    B: [81, 84, 86, 84, 81, 77, 74, 77, 79, 81, 84, 81, 77, 74, 72, 69],
-    lead: 'triangle',
-    counter: 'sine',
-    stab: 'triangle',
-    drive: 0.88,
-  }),
-  // 第3章「星骸の塔」: Aマイナー、高音域の鋸波で切迫感を出す
-  3: Object.freeze({
-    chords: [
-      [45, 52, 57],
-      [45, 52, 57],
-      [43, 50, 55],
-      [41, 48, 53],
-      [38, 45, 50],
-      [43, 50, 55],
-      [40, 47, 52],
-      [45, 52, 57],
-    ],
-    A: [81, 84, 88, 84, 81, 79, 76, 79, 81, 84, 88, 91, 88, 84, 81, 79],
-    B: [88, 91, 93, 91, 88, 84, 81, 84, 86, 88, 91, 88, 84, 81, 79, 76],
+    A: [69, 72, 76, 72, 74, 76, 79, 76, 72, 69, 71, 72, 74, 72, 71, 69],
+    B: [81, 79, 76, 79, 81, 84, 81, 79, 77, 76, 74, 72, 74, 76, 74, 71],
     lead: 'sawtooth',
     counter: 'triangle',
     stab: 'sawtooth',
-    drive: 1.12,
+    drive: 0.94,
   }),
-  // 第4章「黄昏の塔」: Cマイナー、重く沈む刻み
+  // 第3章「星骸の塔」: Eマイナー。高音域で切り込む
+  3: Object.freeze({
+    chords: [
+      [40, 47, 52],
+      [40, 47, 52],
+      [36, 43, 48],
+      [38, 45, 50],
+      [33, 40, 45],
+      [43, 47, 50],
+      [35, 42, 47],
+      [40, 47, 52],
+    ],
+    A: [88, 88, 83, 88, 91, 88, 83, 79, 81, 83, 86, 88, 86, 83, 81, 79],
+    B: [95, 93, 91, 88, 91, 88, 86, 83, 84, 86, 88, 91, 88, 86, 83, 81],
+    lead: 'sawtooth',
+    counter: 'square',
+    stab: 'sawtooth',
+    drive: 1.1,
+  }),
+  // 第4章「黄昏の塔」: Cマイナー。重く沈む刻み
   4: Object.freeze({
     chords: [
       [36, 43, 48],
@@ -81,10 +81,10 @@ const BATTLE_SETS = Object.freeze({
       [43, 47, 50],
       [36, 43, 48],
     ],
-    A: [72, 72, 75, 79, 75, 72, 70, 67, 68, 70, 72, 75, 72, 70, 67, 63],
-    B: [79, 82, 84, 82, 79, 75, 79, 82, 80, 79, 75, 72, 75, 72, 70, 67],
-    lead: 'square',
-    counter: 'sawtooth',
+    A: [72, 72, 75, 79, 78, 75, 72, 68, 70, 72, 75, 80, 79, 75, 72, 67],
+    B: [84, 83, 80, 79, 75, 79, 80, 83, 82, 80, 75, 72, 75, 72, 71, 72],
+    lead: 'sawtooth',
+    counter: 'square',
     stab: 'sawtooth',
     drive: 1.05,
   }),
@@ -150,9 +150,9 @@ const BOSS_CHORDS = Object.freeze([
   [33, 37, 40],
 ]);
 const BOSS_MELODY = Object.freeze([
-  74, 74, 77, 74, 81, 79, 77, 74, 72, 74, 77, 79, 77, 74, 72, 70, 74, 74, 77, 74, 82, 81, 79, 77, 76, 77, 79,
-  81, 79, 77, 76, 74, 77, 79, 81, 84, 82, 81, 79, 77, 75, 77, 79, 82, 81, 79, 77, 75, 74, 77, 81, 86, 84, 82,
-  81, 79, 77, 79, 81, 77, 74, 72, 74, 74,
+  74, 74, 81, 74, 80, 79, 77, 74, 73, 74, 77, 81, 79, 77, 74, 72, 74, 74, 81, 74, 82, 81, 79, 77, 76, 77, 81,
+  84, 82, 81, 79, 77, 81, 84, 86, 84, 82, 81, 79, 77, 76, 79, 82, 86, 84, 82, 79, 76, 74, 81, 86, 89, 88, 86,
+  84, 81, 79, 81, 84, 81, 77, 74, 73, 74,
 ]);
 const BOSS_BASS = Object.freeze([0, 0, 12, 0, 7, 0, 12, 5, 0, 0, 12, 7, 5, 7, 3, 0]);
 // ボス曲は章ごとに移調と音色を変えて、同じ曲に聞こえないようにする。
@@ -188,14 +188,43 @@ function midi(note) {
   return 440 * Math.pow(2, (note - 69) / 12);
 }
 
-function impulseResponse(ctx, seconds = 0.55, decay = 3.2) {
-  const length = Math.floor(ctx.sampleRate * seconds);
-  const buffer = ctx.createBuffer(2, length, ctx.sampleRate);
+function impulseResponse(ctx, seconds = 1.5, decay = 2.6) {
+  // 単なるノイズの減衰ではなく、初期反射を数発置いてから尾を伸ばす。
+  // 左右で反射位置と乱数列を変えて、広がりのある残響にする。
+  const rate = ctx.sampleRate;
+  const length = Math.floor(rate * seconds);
+  const buffer = ctx.createBuffer(2, length, rate);
+  const taps = [
+    [0.011, 0.5],
+    [0.019, 0.42],
+    [0.031, 0.34],
+    [0.047, 0.26],
+    [0.068, 0.2],
+  ];
   for (let channel = 0; channel < 2; channel += 1) {
     const data = buffer.getChannelData(channel);
-    for (let i = 0; i < length; i += 1) data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / length, decay);
+    const skew = channel === 0 ? 1 : 1.13;
+    for (let i = 0; i < length; i += 1) {
+      const t = i / length;
+      data[i] = (Math.random() * 2 - 1) * Math.pow(1 - t, decay) * 0.6;
+    }
+    taps.forEach(([time, amp], k) => {
+      const at = Math.floor(rate * time * skew);
+      if (at < length) data[at] += (k % 2 ? -amp : amp) * (channel ? 0.9 : 1);
+    });
   }
   return buffer;
+}
+
+// tanh 風の飽和カーブ。倍音が増えて、同じ音量でも前に出る。
+function saturationCurve(amount = 3) {
+  const n = 2048;
+  const curve = new Float32Array(n);
+  for (let i = 0; i < n; i += 1) {
+    const x = (i / (n - 1)) * 2 - 1;
+    curve[i] = Math.tanh(x * amount) / Math.tanh(amount);
+  }
+  return curve;
 }
 
 export function trackForState(state) {
@@ -214,6 +243,14 @@ export function createGameAudio({ getState, enabled = true } = {}) {
   let ctx = null;
   let master = null;
   let limiter = null;
+  let sfxSat = null;
+  let leadSat = null;
+  let leadBus = null;
+  let echoL = null,
+    echoR = null,
+    echoFb = null,
+    echoTone = null,
+    echoSend = null;
   let bgmMaster = null;
   let bgmBuses = [];
   let activeBus = 0;
@@ -253,9 +290,49 @@ export function createGameAudio({ getState, enabled = true } = {}) {
       bgmBuses.forEach(b => b.connect(bgmMaster));
       bgmMaster.connect(master);
       bgmMaster.connect(bgmVerbSend).connect(reverb);
-      sfxBus.connect(master);
-      sfxBus.connect(reverbSend).connect(reverb);
+      // 効果音は飽和させてから出す。倍音が増えて打撃が前に出る。
+      sfxSat = ctx.createWaveShaper();
+      sfxSat.curve = saturationCurve(2.2);
+      sfxSat.oversample = '4x';
+      sfxBus.connect(sfxSat);
+      sfxSat.connect(master);
+      sfxSat.connect(reverbSend).connect(reverb);
       reverb.connect(master);
+
+      // 主旋律用の飽和バス。鋸波をここに通すと芯が出る。
+      leadSat = ctx.createWaveShaper();
+      leadSat.curve = saturationCurve(1.6);
+      leadSat.oversample = '2x';
+      leadBus = ctx.createGain();
+      leadBus.gain.value = 1;
+      leadBus.connect(leadSat);
+      leadSat.connect(bgmMaster);
+
+      // 左右で時間差をつけた反響。主旋律と打撃を空間に置く。
+      echoL = ctx.createDelay(1.2);
+      echoR = ctx.createDelay(1.2);
+      echoL.delayTime.value = 0.26;
+      echoR.delayTime.value = 0.39;
+      echoFb = ctx.createGain();
+      echoFb.gain.value = 0.32;
+      echoTone = ctx.createBiquadFilter();
+      echoTone.type = 'lowpass';
+      echoTone.frequency.value = 2600;
+      echoSend = ctx.createGain();
+      echoSend.gain.value = 1;
+      const panL = ctx.createStereoPanner();
+      const panR = ctx.createStereoPanner();
+      panL.pan.value = -0.72;
+      panR.pan.value = 0.72;
+      echoSend.connect(echoL);
+      echoSend.connect(echoR);
+      echoL.connect(panL).connect(master);
+      echoR.connect(panR).connect(master);
+      echoL.connect(echoTone);
+      echoR.connect(echoTone);
+      echoTone.connect(echoFb);
+      echoFb.connect(echoL);
+      echoFb.connect(echoR);
       // BGM を上げたぶん、まとめてリミッターに通して歪みを防ぐ。
       // 効果音のピークで BGM がわずかに沈むので、打撃の抜けも良くなる。
       limiter = ctx.createDynamicsCompressor();
@@ -302,6 +379,7 @@ export function createGameAudio({ getState, enabled = true } = {}) {
     when = 0,
     bus: target = null,
     detune = 0,
+    pan = 0,
   }) {
     if (!ensure()) return;
     const start = ctx.currentTime + when;
@@ -314,7 +392,16 @@ export function createGameAudio({ getState, enabled = true } = {}) {
     envelope.gain.setValueAtTime(0.0001, start);
     envelope.gain.exponentialRampToValueAtTime(Math.max(0.0002, gain), start + attack);
     envelope.gain.exponentialRampToValueAtTime(0.0001, start + duration);
-    osc.connect(envelope).connect(target || sfxBus);
+    if (pan) {
+      const p = ctx.createStereoPanner();
+      p.pan.value = Math.max(-1, Math.min(1, pan));
+      osc
+        .connect(envelope)
+        .connect(p)
+        .connect(target || sfxBus);
+    } else {
+      osc.connect(envelope).connect(target || sfxBus);
+    }
     osc.start(start);
     osc.stop(start + duration + 0.03);
   }
@@ -329,6 +416,8 @@ export function createGameAudio({ getState, enabled = true } = {}) {
     attack = 0.002,
     bus: target = null,
     curve = 1.7,
+    pan = 0,
+    frequencyEnd = null,
   }) {
     if (!ensure()) return;
     const start = ctx.currentTime + when;
@@ -342,22 +431,195 @@ export function createGameAudio({ getState, enabled = true } = {}) {
     source.buffer = buffer;
     filter.type = type;
     filter.frequency.setValueAtTime(frequency, start);
+    if (frequencyEnd != null) {
+      filter.frequency.exponentialRampToValueAtTime(Math.max(40, frequencyEnd), start + duration);
+    }
     filter.Q.value = q;
     envelope.gain.setValueAtTime(0.0001, start);
     envelope.gain.exponentialRampToValueAtTime(Math.max(0.0002, gain), start + attack);
     envelope.gain.exponentialRampToValueAtTime(0.0001, start + duration);
-    source
-      .connect(filter)
-      .connect(envelope)
-      .connect(target || sfxBus);
+    if (pan) {
+      const p = ctx.createStereoPanner();
+      p.pan.value = Math.max(-1, Math.min(1, pan));
+      source
+        .connect(filter)
+        .connect(envelope)
+        .connect(p)
+        .connect(target || sfxBus);
+    } else {
+      source
+        .connect(filter)
+        .connect(envelope)
+        .connect(target || sfxBus);
+    }
     source.start(start);
     source.stop(start + duration + 0.03);
   }
 
+  // ---- レゾナンス付きフィルターを通す音源 ----
+  // SNES期のリード/ベースの要は「フィルターが時間で閉じていくこと」。
+  // 素の波形を鳴らすだけだと、どれだけ音量を上げても薄いままになる。
+  function voice({
+    frequency,
+    endFrequency = frequency,
+    duration = 0.2,
+    type = 'sawtooth',
+    gain = 0.05,
+    attack = 0.006,
+    decay = null,
+    sustain = 0.6,
+    when = 0,
+    bus: target = null,
+    // フィルター
+    cutoff = 3200,
+    cutoffEnd = null,
+    resonance = 6,
+    // 厚み
+    unison = 1,
+    spread = 8,
+    pan = 0,
+    // 揺らぎ
+    vibrato = 0,
+    vibratoRate = 5.5,
+    // 送り
+    echo = 0,
+    verb = 0,
+  }) {
+    if (!ensure()) return;
+    const start = ctx.currentTime + when;
+    const end = start + duration;
+    const out = ctx.createGain();
+    const filter = ctx.createBiquadFilter();
+    const panner = ctx.createStereoPanner();
+    filter.type = 'lowpass';
+    filter.Q.value = resonance;
+    const c0 = Math.max(80, cutoff);
+    const c1 = Math.max(80, cutoffEnd == null ? cutoff * 0.35 : cutoffEnd);
+    filter.frequency.setValueAtTime(c0, start);
+    filter.frequency.exponentialRampToValueAtTime(c1, end);
+    panner.pan.value = Math.max(-1, Math.min(1, pan));
+
+    const peak = Math.max(0.0002, gain);
+    const dcy = decay == null ? Math.min(0.12, duration * 0.35) : decay;
+    out.gain.setValueAtTime(0.0001, start);
+    out.gain.exponentialRampToValueAtTime(peak, start + attack);
+    out.gain.exponentialRampToValueAtTime(Math.max(0.0002, peak * sustain), start + attack + dcy);
+    out.gain.exponentialRampToValueAtTime(0.0001, end);
+
+    let lfo = null;
+    let lfoGain = null;
+    if (vibrato > 0) {
+      lfo = ctx.createOscillator();
+      lfoGain = ctx.createGain();
+      lfo.frequency.value = vibratoRate;
+      lfoGain.gain.setValueAtTime(0, start);
+      lfoGain.gain.linearRampToValueAtTime(vibrato, start + Math.min(0.18, duration * 0.5));
+      lfo.connect(lfoGain);
+      lfo.start(start);
+      lfo.stop(end + 0.05);
+    }
+
+    const n = Math.max(1, Math.min(3, unison));
+    for (let i = 0; i < n; i += 1) {
+      const osc = ctx.createOscillator();
+      osc.type = type;
+      osc.detune.value = n === 1 ? 0 : (i - (n - 1) / 2) * spread * 2;
+      osc.frequency.setValueAtTime(Math.max(20, frequency), start);
+      osc.frequency.exponentialRampToValueAtTime(Math.max(20, endFrequency), end);
+      if (lfoGain) lfoGain.connect(osc.detune);
+      osc.connect(filter);
+      osc.start(start);
+      osc.stop(end + 0.04);
+    }
+    filter.connect(out).connect(panner);
+    panner.connect(target || bgmMaster);
+    if (echo > 0 && echoSend) {
+      const e = ctx.createGain();
+      e.gain.value = echo;
+      panner.connect(e).connect(echoSend);
+    }
+    if (verb > 0 && reverb) {
+      const v = ctx.createGain();
+      v.gain.value = verb;
+      panner.connect(v).connect(reverb);
+    }
+  }
+
+  // ---- 打撃の芯 ----
+  // 立ち上がりの一撃(クリック) / 胴鳴り / サブ の3層を、
+  // それぞれ別の減衰で重ねる。1層だけだと「バシッ」にならない。
+  function impact({
+    when = 0,
+    power = 1,
+    tone = 1,
+    body = 220,
+    sub = 60,
+    click = 6000,
+    noiseLen = 0.18,
+    verb = 0.25,
+  }) {
+    if (!ensure()) return;
+    // 1) トランジェント: 1ms で立ち上がる高域のクリック
+    noiseBurst({
+      duration: 0.022,
+      gain: 0.34 * power,
+      frequency: click * tone,
+      type: 'highpass',
+      attack: 0.0005,
+      when,
+      curve: 3.2,
+    });
+    // 2) 胴鳴り: 帯域を絞ったノイズを、フィルターを閉じながら
+    noiseBurst({
+      duration: noiseLen,
+      gain: 0.26 * power,
+      frequency: body * 4 * tone,
+      type: 'bandpass',
+      q: 0.9,
+      attack: 0.001,
+      when,
+      curve: 1.5,
+    });
+    // 3) 芯: ピッチを一気に落とす。これが「重さ」になる
+    oscillator({
+      frequency: body * 1.9,
+      endFrequency: body * 0.42,
+      duration: noiseLen * 1.35,
+      type: 'triangle',
+      gain: 0.3 * power,
+      attack: 0.0008,
+      when,
+    });
+    // 4) サブ: 体で感じる帯域
+    oscillator({
+      frequency: sub * 2.1,
+      endFrequency: sub * 0.62,
+      duration: noiseLen * 2.0,
+      type: 'sine',
+      gain: 0.26 * power,
+      attack: 0.001,
+      when,
+    });
+    // 5) 余韻: 短い残響へ送って空間に置く
+    if (verb > 0 && reverb) {
+      noiseBurst({
+        duration: 0.09,
+        gain: 0.1 * power * verb,
+        frequency: body * 3,
+        type: 'bandpass',
+        when,
+        bus: reverbSend,
+      });
+    }
+  }
+
   // 鐘・チャイム系: 基音 + 非整数倍音でガラス質の響きを作る
-  function bell(note, { duration = 1.1, gain = 0.03, when = 0, bus: target = null, bright = 1 } = {}) {
+  function bell(
+    note,
+    { duration = 1.1, gain = 0.03, when = 0, bus: target = null, bright = 1, echo = 0, pan = 0 } = {},
+  ) {
     const base = midi(note);
-    oscillator({ frequency: base, duration, type: 'sine', gain, attack: 0.006, when, bus: target });
+    oscillator({ frequency: base, duration, type: 'sine', gain, attack: 0.006, when, bus: target, pan });
     oscillator({
       frequency: base * 2.76,
       duration: duration * 0.55,
@@ -376,6 +638,17 @@ export function createGameAudio({ getState, enabled = true } = {}) {
       when,
       bus: target,
     });
+    if (echo > 0 && echoSend) {
+      oscillator({
+        frequency: base,
+        duration: duration * 0.5,
+        type: 'sine',
+        gain: gain * echo,
+        attack: 0.01,
+        when,
+        bus: echoSend,
+      });
+    }
   }
 
   function pad(
@@ -406,32 +679,99 @@ export function createGameAudio({ getState, enabled = true } = {}) {
   }
 
   function kick(when, gain = 0.1) {
-    oscillator({ frequency: 120, endFrequency: 46, duration: 0.16, type: 'sine', gain, when, bus: bus() });
-    noiseBurst({ duration: 0.035, gain: gain * 0.35, frequency: 900, type: 'lowpass', when, bus: bus() });
-  }
-
-  function snare(when, gain = 0.065) {
-    noiseBurst({ duration: 0.11, gain, frequency: 1750, type: 'bandpass', q: 0.65, when, bus: bus() });
+    // 芯のあるキック: クリック + ピッチを落とす胴 + サブ
+    noiseBurst({
+      duration: 0.012,
+      gain: gain * 1.6,
+      frequency: 3800,
+      type: 'highpass',
+      attack: 0.0005,
+      when,
+      bus: bus(),
+      curve: 3,
+    });
     oscillator({
       frequency: 190,
-      endFrequency: 130,
-      duration: 0.09,
+      endFrequency: 44,
+      duration: 0.14,
       type: 'triangle',
-      gain: gain * 0.45,
+      gain: gain * 1.5,
+      attack: 0.0008,
+      when,
+      bus: bus(),
+    });
+    oscillator({
+      frequency: 82,
+      endFrequency: 36,
+      duration: 0.26,
+      type: 'sine',
+      gain: gain * 1.9,
+      attack: 0.001,
       when,
       bus: bus(),
     });
   }
 
-  function hat(when, open = false, gain = 1) {
-    noiseBurst({
-      duration: open ? 0.095 : 0.035,
-      gain: (open ? 0.027 : 0.018) * gain,
-      frequency: 6200,
-      type: 'highpass',
-      q: 0.5,
+  function snare(when, gain = 0.065) {
+    // 胴の鳴り + ざらついた高域 + 短い残響で奥行きを出す
+    oscillator({
+      frequency: 240,
+      endFrequency: 155,
+      duration: 0.09,
+      type: 'triangle',
+      gain: gain * 1.5,
+      attack: 0.0008,
       when,
       bus: bus(),
+    });
+    noiseBurst({
+      duration: 0.14,
+      gain: gain * 2.3,
+      frequency: 2200,
+      frequencyEnd: 1100,
+      type: 'bandpass',
+      q: 0.6,
+      attack: 0.0006,
+      when,
+      bus: bus(),
+      curve: 1.4,
+    });
+    noiseBurst({
+      duration: 0.05,
+      gain: gain * 1.2,
+      frequency: 7000,
+      type: 'highpass',
+      attack: 0.0005,
+      when,
+      bus: bus(),
+      curve: 2.6,
+    });
+    if (reverb) {
+      noiseBurst({
+        duration: 0.06,
+        gain: gain * 0.9,
+        frequency: 2400,
+        type: 'bandpass',
+        when,
+        bus: reverbSend,
+      });
+    }
+  }
+
+  function hat(when, open = false, gain = 1) {
+    // 左右に軽く振って、刻みに横幅を出す
+    noiseBurst({
+      duration: open ? 0.12 : 0.03,
+      gain: (open ? 0.03 : 0.022) * gain,
+      frequency: 8200,
+      frequencyEnd: open ? 5000 : 9000,
+      type: 'highpass',
+      q: 0.6,
+      attack: 0.0005,
+      when,
+      bus: bus(),
+      curve: open ? 1.6 : 3,
+      pan: open ? 0.3 : -0.22,
     });
   }
 
@@ -456,32 +796,55 @@ export function createGameAudio({ getState, enabled = true } = {}) {
       const intro = step + 16;
       const root = set.chords[0][0];
       if (intro === 0) {
-        kick(when, 0.17);
-        noiseBurst({ duration: 0.34, gain: 0.1, frequency: 900, type: 'bandpass', when, bus: bus() });
-        oscillator({
-          frequency: midi(root - 12),
-          endFrequency: midi(root),
+        kick(when, 0.2);
+        snare(when, 0.09);
+        noiseBurst({
           duration: 0.5,
-          type: 'sawtooth',
-          gain: 0.06,
+          gain: 0.13,
+          frequency: 300,
+          frequencyEnd: 4800,
+          type: 'bandpass',
+          attack: 0.4,
           when,
           bus: bus(),
+        });
+        voice({
+          frequency: midi(root - 12),
+          endFrequency: midi(root + 12),
+          duration: 0.55,
+          type: 'sawtooth',
+          gain: 0.075,
+          attack: 0.01,
+          sustain: 0.8,
+          cutoff: 900,
+          cutoffEnd: 7000,
+          resonance: 10,
+          when,
+          bus: bus(),
+          unison: 2,
         });
       }
       if (intro === 8) {
-        kick(when, 0.13);
-        snare(when, 0.07);
+        kick(when, 0.15);
+        snare(when, 0.085);
       }
       if ([10, 12, 14, 15].includes(intro)) {
         const climb = [0, 3, 7, 10][[10, 12, 14, 15].indexOf(intro)];
-        oscillator({
+        voice({
           frequency: midi(root + 24 + climb),
           duration: 0.11,
           type: set.lead,
-          gain: 0.055,
+          gain: 0.07,
+          attack: 0.002,
+          sustain: 0.4,
+          cutoff: 6000,
+          cutoffEnd: 2200,
+          resonance: 9,
           when,
-          bus: bus(),
+          bus: leadBus || bus(),
+          echo: 0.2,
         });
+        snare(when, 0.05 + climb * 0.004);
         hat(when, intro === 15);
       }
       return;
@@ -497,132 +860,191 @@ export function createGameAudio({ getState, enabled = true } = {}) {
     const lift = section === 'C' ? 12 : 0; // 最後の2小節は1オクターブ上げて煽る
     const dense = section === 'C' || slot >= 5;
     const drive = set.drive;
+    const lead = leadBus || bus();
 
     // --- ドラム ---
-    if (BATTLE_KICKS.includes(beat)) kick(when, (beat === 0 ? 0.115 : 0.092) * drive);
-    if (beat === 4 || beat === 12) snare(when, (dense ? 0.075 : 0.062) * drive);
+    if (BATTLE_KICKS.includes(beat)) kick(when, (beat === 0 ? 0.115 : 0.088) * drive);
+    if (beat === 4 || beat === 12) snare(when, (dense ? 0.072 : 0.058) * drive);
     if (beat % 2 === 0) hat(when, beat === 14 && slot % 2 === 1);
-    if (dense && beat % 4 === 3) hat(when, false, 0.6);
-    // 16小節目の締めのフィル
+    if (dense && beat % 4 === 3) hat(when, false, 0.55);
     if (section === 'C' && bar % 2 === 1 && beat >= 8 && beat % 2 === 0) {
       snare(when, (0.05 + (beat - 8) * 0.008) * drive);
     }
 
-    // --- ベース (8分の刻み + サブ) ---
+    // --- ベース: フィルターを閉じた鋸波。芯があって前に出る ---
     if (beat % 2 === 0) {
       const note = chord[0] - 12 + BATTLE_BASS[beat / 2];
-      oscillator({
+      voice({
         frequency: midi(note),
-        endFrequency: midi(note - 0.6),
-        duration: 0.13,
-        type: 'triangle',
-        gain: 0.05 * drive,
+        duration: 0.135,
+        type: 'sawtooth',
+        gain: 0.062 * drive,
+        attack: 0.002,
+        sustain: 0.45,
+        cutoff: 900,
+        cutoffEnd: 320,
+        resonance: 7,
         when,
         bus: bus(),
       });
-    }
-    if (beat === 0 || beat === 8)
-      oscillator({
-        frequency: midi(chord[0] - 24),
-        duration: 0.24,
-        type: 'sine',
-        gain: 0.03,
-        when,
-        bus: bus(),
-      });
-
-    // --- キック位置に合わせたコードの刻み ---
-    if (BATTLE_KICKS.includes(beat)) {
-      [chord[0], chord[1]].forEach((note, i) =>
+      if (beat === 0 || beat === 8) {
         oscillator({
-          frequency: midi(note + 12),
-          duration: 0.11,
-          type: set.stab,
-          gain: (0.016 - i * 0.005) * drive,
-          attack: 0.006,
+          frequency: midi(chord[0] - 24),
+          duration: 0.22,
+          type: 'sine',
+          gain: 0.035,
           when,
           bus: bus(),
-          detune: i * 7 - 3,
-        }),
-      );
+        });
+      }
+    }
+
+    // --- 刻みのコード。左右に開いて厚みを出す ---
+    if (BATTLE_KICKS.includes(beat)) {
+      [chord[0], chord[1], chord[2]].forEach((note, i) => {
+        voice({
+          frequency: midi(note + 12),
+          duration: 0.1,
+          type: set.stab,
+          gain: (0.019 - i * 0.004) * drive,
+          attack: 0.004,
+          sustain: 0.4,
+          cutoff: 2600,
+          cutoffEnd: 1100,
+          resonance: 4,
+          when,
+          bus: bus(),
+          unison: 2,
+          spread: 10,
+          pan: i === 0 ? 0 : i === 1 ? -0.45 : 0.45,
+        });
+      });
     }
 
     // --- 裏拍の対旋律 ---
     if (beat % 4 === 2) {
       const counterNote = chord[(beat / 2 + slot) % chord.length] + 12;
-      oscillator({
+      voice({
         frequency: midi(counterNote),
         duration: 0.09,
         type: set.counter,
         gain: 0.016,
+        attack: 0.003,
+        sustain: 0.35,
+        cutoff: 3400,
+        cutoffEnd: 1500,
+        resonance: 5,
         when,
         bus: bus(),
+        pan: 0.35,
       });
     }
 
-    // --- 主旋律 (8分音符) ---
+    // --- 主旋律: 掛かったフィルター + ビブラート + 左右の反響 ---
     if (beat % 2 === 0) {
       const note = melody[((bar % 2) * 8 + beat / 2) % melody.length] + lift;
-      oscillator({
+      const accent = beat % 8 === 0 ? 1.25 : beat % 4 === 0 ? 1.08 : 1;
+      voice({
         frequency: midi(note),
-        endFrequency: midi(note - 0.3),
-        duration: 0.155,
+        duration: 0.17,
         type: set.lead,
-        gain: 0.03 * drive,
-        attack: 0.01,
+        gain: 0.042 * drive * accent,
+        attack: 0.005,
+        sustain: 0.62,
+        cutoff: 4200 + accent * 1200,
+        cutoffEnd: 1500,
+        resonance: 8,
         when,
-        bus: bus(),
+        bus: lead,
+        unison: 2,
+        spread: 7,
+        vibrato: 6,
+        vibratoRate: 6.2,
+        echo: 0.18,
+        verb: 0.1,
       });
-      oscillator({
-        frequency: midi(note),
-        duration: 0.13,
-        type: 'triangle',
-        gain: 0.009,
-        when,
-        bus: bus(),
-        detune: 9,
-      });
-      if (dense)
-        oscillator({
+      // オクターブ上を薄く重ねて煌めきを足す
+      if (dense) {
+        voice({
           frequency: midi(note + 12),
-          duration: 0.085,
+          duration: 0.1,
           type: 'triangle',
-          gain: 0.011,
-          when: when + 0.007,
+          gain: 0.013,
+          attack: 0.004,
+          sustain: 0.4,
+          cutoff: 7000,
+          cutoffEnd: 3000,
+          resonance: 3,
+          when: when + 0.008,
           bus: bus(),
+          pan: -0.3,
         });
+      }
     }
   }
 
   function scheduleBossStep(step, when, variant) {
+    const lead = leadBus || bus();
     if (step < 0) {
       const intro = step + 12;
       if (intro === 0) {
-        kick(when, 0.2);
-        noiseBurst({ duration: 0.55, gain: 0.11, frequency: 620, type: 'bandpass', when, bus: bus() });
-        oscillator({
-          frequency: midi(26 + variant.shift),
-          endFrequency: midi(38 + variant.shift),
-          duration: 0.75,
-          type: 'sawtooth',
-          gain: 0.08,
+        kick(when, 0.24);
+        noiseBurst({
+          duration: 0.7,
+          gain: 0.14,
+          frequency: 260,
+          frequencyEnd: 1800,
+          type: 'bandpass',
+          attack: 0.5,
           when,
           bus: bus(),
+        });
+        voice({
+          frequency: midi(26 + variant.shift),
+          endFrequency: midi(38 + variant.shift),
+          duration: 0.8,
+          type: 'sawtooth',
+          gain: 0.1,
+          attack: 0.02,
+          sustain: 0.9,
+          cutoff: 500,
+          cutoffEnd: 3200,
+          resonance: 9,
+          when,
+          bus: bus(),
+          unison: 3,
+          spread: 12,
         });
       }
       if (intro === 6 || intro === 9) {
-        snare(when, 0.09);
-        oscillator({
+        snare(when, 0.1);
+        kick(when, 0.16);
+        voice({
           frequency: midi(50 + variant.shift + (intro - 6) * 2),
           duration: 0.16,
           type: 'square',
-          gain: 0.05,
+          gain: 0.055,
+          attack: 0.002,
+          sustain: 0.4,
+          cutoff: 4000,
+          cutoffEnd: 1400,
+          resonance: 8,
           when,
-          bus: bus(),
+          bus: lead,
+          echo: 0.2,
         });
       }
       if (intro === 11) {
-        noiseBurst({ duration: 0.22, gain: 0.13, frequency: 4200, type: 'highpass', when, bus: bus() });
+        noiseBurst({
+          duration: 0.3,
+          gain: 0.16,
+          frequency: 6000,
+          frequencyEnd: 1200,
+          type: 'highpass',
+          attack: 0.001,
+          when,
+          bus: bus(),
+        });
       }
       return;
     }
@@ -633,84 +1055,111 @@ export function createGameAudio({ getState, enabled = true } = {}) {
     const half = bar >= 4;
 
     // ドラム: 前へ前へと押すパターン
-    if ([0, 3, 6, 8, 11, 14].includes(beat)) kick(when, beat === 0 ? 0.13 : 0.1);
-    if (beat === 4 || beat === 12) snare(when, 0.085);
+    if ([0, 3, 6, 8, 11, 14].includes(beat)) kick(when, beat === 0 ? 0.14 : 0.1);
+    if (beat === 4 || beat === 12) snare(when, 0.088);
     if (half && (beat === 7 || beat === 15)) snare(when, 0.05);
-    hat(when, beat === 14, 0.85);
+    hat(when, beat === 14, 0.8);
 
-    // 16分の刻みベース
+    // 16分の刻みベース。フィルターを閉じて輪郭を出す
     const bassNote = chord[0] - 12 + BOSS_BASS[beat];
-    oscillator({
+    voice({
       frequency: midi(bassNote),
-      duration: 0.075,
+      duration: 0.08,
       type: variant.bass,
-      gain: 0.045,
+      gain: 0.055,
+      attack: 0.0015,
+      sustain: 0.35,
+      cutoff: 1100,
+      cutoffEnd: 380,
+      resonance: 8,
       when,
       bus: bus(),
     });
-    if (beat % 4 === 0)
+    if (beat % 4 === 0) {
       oscillator({
         frequency: midi(chord[0] - 24),
-        duration: 0.28,
+        duration: 0.26,
         type: 'sine',
         gain: 0.05,
         when,
         bus: bus(),
       });
+    }
 
-    // 刻むパワーコード
+    // 刻むパワーコード。左右に開く
     if (beat % 2 === 0) {
-      [chord[0], chord[0] + 7].forEach((note, i) =>
-        oscillator({
+      [chord[0], chord[0] + 7].forEach((note, i) => {
+        voice({
           frequency: midi(note),
           duration: 0.1,
           type: variant.lead,
-          gain: 0.017 - i * 0.004,
-          attack: 0.006,
+          gain: 0.02 - i * 0.005,
+          attack: 0.004,
+          sustain: 0.4,
+          cutoff: 2400,
+          cutoffEnd: 900,
+          resonance: 5,
           when,
           bus: bus(),
-          detune: i * 6 - 3,
-        }),
-      );
+          unison: 2,
+          spread: 11,
+          pan: i ? 0.4 : -0.4,
+        });
+      });
     }
 
     // ブラス風の主旋律
     const melodyNote = BOSS_MELODY[(bar * 8 + Math.floor(beat / 2)) % BOSS_MELODY.length] + variant.shift;
     if (beat % 2 === 0) {
-      oscillator({
+      const accent = beat % 8 === 0 ? 1.3 : 1;
+      voice({
         frequency: midi(melodyNote),
-        endFrequency: midi(melodyNote - 0.3),
         duration: 0.16,
         type: variant.lead,
-        gain: 0.032,
-        attack: 0.014,
+        gain: 0.05 * accent,
+        attack: 0.006,
+        sustain: 0.68,
+        cutoff: 3600 + accent * 1400,
+        cutoffEnd: 1300,
+        resonance: 9,
         when,
-        bus: bus(),
+        bus: lead,
+        unison: 3,
+        spread: 9,
+        vibrato: 7,
+        vibratoRate: 5.8,
+        echo: 0.2,
+        verb: 0.12,
       });
-      oscillator({
-        frequency: midi(melodyNote),
-        duration: 0.14,
-        type: 'square',
-        gain: 0.012,
-        when,
-        bus: bus(),
-        detune: 8,
-      });
-      if (half)
-        oscillator({
+      if (half) {
+        voice({
           frequency: midi(melodyNote + 12),
           duration: 0.1,
           type: 'triangle',
           gain: 0.014,
+          attack: 0.004,
+          sustain: 0.4,
+          cutoff: 7000,
+          cutoffEnd: 3200,
+          resonance: 3,
           when: when + 0.008,
           bus: bus(),
+          pan: 0.32,
         });
+      }
     }
 
     // 8小節目の切り返しフィル
     if (bar === 7 && beat >= 12) {
-      snare(when, 0.07 + (beat - 12) * 0.012);
-      noiseBurst({ duration: 0.05, gain: 0.03, frequency: 5200, type: 'highpass', when, bus: bus() });
+      snare(when, 0.07 + (beat - 12) * 0.014);
+      noiseBurst({
+        duration: 0.05,
+        gain: 0.035,
+        frequency: 5200,
+        type: 'highpass',
+        when,
+        bus: bus(),
+      });
     }
   }
 
@@ -737,7 +1186,15 @@ export function createGameAudio({ getState, enabled = true } = {}) {
       }
       if (beat % 4 === 0) {
         const note = cfg.melody[(loop / 4) % cfg.melody.length];
-        bell(note, { duration: 1.25, gain: 0.024, when, bus: bus(), bright: 0.7 });
+        bell(note, {
+          duration: 1.25,
+          gain: 0.026,
+          when,
+          bus: bus(),
+          bright: 0.7,
+          echo: 0.5,
+          pan: (loop / 4) % 2 ? 0.28 : -0.28,
+        });
       }
       if (beat === 18 && phrase % 2 === 1) {
         oscillator({
@@ -800,15 +1257,23 @@ export function createGameAudio({ getState, enabled = true } = {}) {
       if (beat % 4 === 2) shaker(when);
       if (beat % 4 === 0) {
         const note = cfg.melody[(loop / 4) % cfg.melody.length];
-        oscillator({
+        voice({
           frequency: midi(note),
           endFrequency: midi(note - 0.2),
-          duration: 0.62,
-          type: 'sine',
-          gain: 0.027,
+          duration: 0.66,
+          type: 'triangle',
+          gain: 0.032,
           attack: 0.05,
+          sustain: 0.7,
+          cutoff: 2600,
+          cutoffEnd: 1100,
+          resonance: 3,
           when,
           bus: bus(),
+          vibrato: 4,
+          vibratoRate: 4.6,
+          echo: 0.35,
+          pan: (loop / 4) % 2 ? 0.22 : -0.22,
         });
         oscillator({
           frequency: midi(note + 12),
@@ -850,7 +1315,15 @@ export function createGameAudio({ getState, enabled = true } = {}) {
         });
       if (beat % 4 === 0) {
         const note = cfg.melody[(loop / 4) % cfg.melody.length];
-        bell(note, { duration: 1.9, gain: 0.026, when, bus: bus(), bright: 0.85 });
+        bell(note, {
+          duration: 1.9,
+          gain: 0.028,
+          when,
+          bus: bus(),
+          bright: 0.85,
+          echo: 0.55,
+          pan: (loop / 4) % 2 ? 0.25 : -0.25,
+        });
       }
       if (beat % 16 === 10) {
         const echo = cfg.melody[(Math.floor(loop / 4) + 2) % cfg.melody.length] - 12;
@@ -893,7 +1366,15 @@ export function createGameAudio({ getState, enabled = true } = {}) {
     }
     if (beat % 4 === 0) {
       const note = cfg.melody[(loop / 4) % cfg.melody.length];
-      bell(note, { duration: 1.6, gain: 0.023, when, bus: bus(), bright: 1.25 });
+      bell(note, {
+        duration: 1.6,
+        gain: 0.025,
+        when,
+        bus: bus(),
+        bright: 1.25,
+        echo: 0.6,
+        pan: (loop / 4) % 2 ? -0.32 : 0.32,
+      });
     }
     if (beat % 8 === 5) {
       const shimmer = cfg.melody[(Math.floor(loop / 4) + 3) % cfg.melody.length] + 12;
@@ -1127,53 +1608,92 @@ export function createGameAudio({ getState, enabled = true } = {}) {
     }
 
     if (kind === 'blade' || kind === 'slash') {
-      noiseBurst({ duration: 0.022, gain: 0.24, frequency: 7200, type: 'highpass', attack: 0.0006 });
-      noiseBurst({ duration: 0.2, gain: 0.2, frequency: 3200, type: 'highpass' });
-      oscillator({ frequency: 1820, endFrequency: 360, duration: 0.16, type: 'sawtooth', gain: 0.09 });
-      oscillator({ frequency: 2600, endFrequency: 900, duration: 0.1, type: 'sine', gain: 0.05, when: 0.01 });
-      oscillator({
-        frequency: 250,
-        endFrequency: 88,
-        duration: 0.21,
-        type: 'triangle',
-        gain: 0.11,
-        when: 0.012,
+      // 振り抜く風切り(高域を下げながら)
+      noiseBurst({
+        duration: 0.13,
+        gain: 0.2,
+        frequency: 9000,
+        frequencyEnd: 1800,
+        type: 'highpass',
+        attack: 0.004,
+        when: 0,
+        pan: -0.25,
+      });
+      // 刃が当たる瞬間
+      impact({ when: 0.055, power: 1.0, tone: 1.5, body: 300, sub: 78, click: 8200, noiseLen: 0.13 });
+      // 金属の鳴き。フィルターを閉じながら落とす
+      voice({
+        frequency: 2100,
+        endFrequency: 620,
+        duration: 0.2,
+        type: 'sawtooth',
+        gain: 0.1,
+        attack: 0.001,
+        sustain: 0.3,
+        cutoff: 9000,
+        cutoffEnd: 1400,
+        resonance: 9,
+        when: 0.055,
+        bus: sfxBus,
+        pan: 0.2,
+        verb: 0.3,
       });
     } else if (kind === 'normalImpact' || kind === 'hit') {
-      noiseBurst({ duration: 0.028, gain: 0.3, frequency: 5200, type: 'highpass', attack: 0.0006 });
-      noiseBurst({ duration: 0.17, gain: 0.22, frequency: 950, type: 'bandpass', q: 0.7 });
-      oscillator({ frequency: 330, endFrequency: 70, duration: 0.23, type: 'triangle', gain: 0.21 });
-      oscillator({ frequency: 128, endFrequency: 42, duration: 0.32, type: 'sine', gain: 0.18 });
-      oscillator({
-        frequency: 800,
-        endFrequency: 300,
-        duration: 0.09,
+      impact({ power: 1.15, tone: 1.0, body: 240, sub: 62, click: 6200, noiseLen: 0.19, verb: 0.32 });
+      // 骨に響くような低い唸りを足す
+      voice({
+        frequency: 190,
+        endFrequency: 58,
+        duration: 0.26,
         type: 'square',
-        gain: 0.055,
-        when: 0.006,
+        gain: 0.11,
+        attack: 0.001,
+        sustain: 0.25,
+        cutoff: 1600,
+        cutoffEnd: 220,
+        resonance: 7,
+        when: 0.004,
+        bus: sfxBus,
       });
     } else if (kind === 'staffSwing') {
       noiseBurst({ duration: 0.11, gain: 0.095, frequency: 2100, type: 'highpass' });
       oscillator({ frequency: 520, endFrequency: 250, duration: 0.1, type: 'triangle', gain: 0.045 });
     } else if (kind === 'staffImpact') {
-      noiseBurst({ duration: 0.025, gain: 0.2, frequency: 4200, type: 'highpass', attack: 0.0006 });
-      noiseBurst({ duration: 0.14, gain: 0.19, frequency: 700, type: 'bandpass', q: 0.55 });
-      oscillator({ frequency: 300, endFrequency: 88, duration: 0.2, type: 'triangle', gain: 0.19 });
-      oscillator({ frequency: 120, endFrequency: 46, duration: 0.26, type: 'sine', gain: 0.13 });
-      oscillator({
-        frequency: 880,
-        endFrequency: 520,
-        duration: 0.06,
-        type: 'sine',
-        gain: 0.05,
-        when: 0.006,
+      impact({ power: 1.0, tone: 0.8, body: 200, sub: 55, click: 4600, noiseLen: 0.17, verb: 0.3 });
+      voice({
+        frequency: 520,
+        endFrequency: 150,
+        duration: 0.22,
+        type: 'triangle',
+        gain: 0.09,
+        attack: 0.002,
+        sustain: 0.3,
+        cutoff: 3000,
+        cutoffEnd: 500,
+        resonance: 8,
+        when: 0.005,
+        bus: sfxBus,
+        verb: 0.25,
       });
     } else if (kind === 'dash' || kind === 'returnDash') {
       noiseBurst({ duration: 0.2, gain: 0.09, frequency: 2600, type: 'highpass' });
       oscillator({ frequency: 720, endFrequency: 1280, duration: 0.13, type: 'triangle', gain: 0.035 });
     } else if (kind === 'enemy') {
-      noiseBurst({ duration: 0.18, gain: 0.13, frequency: 620, type: 'lowpass' });
-      oscillator({ frequency: 210, endFrequency: 78, duration: 0.25, type: 'sawtooth', gain: 0.085 });
+      impact({ power: 0.95, tone: 0.62, body: 165, sub: 48, click: 3200, noiseLen: 0.21, verb: 0.3 });
+      voice({
+        frequency: 240,
+        endFrequency: 62,
+        duration: 0.3,
+        type: 'sawtooth',
+        gain: 0.085,
+        attack: 0.003,
+        sustain: 0.3,
+        cutoff: 1500,
+        cutoffEnd: 200,
+        resonance: 6,
+        when: 0.006,
+        bus: sfxBus,
+      });
     } else if (kind === 'heal') {
       [72, 76, 79, 84].forEach((note, i) =>
         oscillator({
@@ -1210,19 +1730,65 @@ export function createGameAudio({ getState, enabled = true } = {}) {
         when: 0.018,
       });
     } else if (kind === 'starImpact' || kind === 'critical') {
-      noiseBurst({ duration: 0.38, gain: 0.24, frequency: 1150, type: 'bandpass' });
-      noiseBurst({ duration: 0.13, gain: 0.13, frequency: 4200, type: 'highpass', when: 0.015 });
-      oscillator({ frequency: 145, endFrequency: 48, duration: 0.42, type: 'sine', gain: 0.19 });
-      [910, 1320, 1870].forEach((frequency, i) =>
-        oscillator({
-          frequency,
-          endFrequency: frequency * 0.55,
-          duration: 0.22,
-          type: 'triangle',
-          gain: 0.055,
-          when: i * 0.018,
-        }),
-      );
+      // ためてから叩き込む。0.06秒の吸い込みが「バシッ」を作る
+      noiseBurst({
+        duration: 0.06,
+        gain: 0.1,
+        frequency: 700,
+        frequencyEnd: 5200,
+        type: 'bandpass',
+        attack: 0.05,
+        when: 0,
+      });
+      impact({
+        when: 0.06,
+        power: 1.9,
+        tone: 1.25,
+        body: 300,
+        sub: 46,
+        click: 9000,
+        noiseLen: 0.3,
+        verb: 0.6,
+      });
+      // 三層の金属の悲鳴を左右に振る
+      [
+        [1180, -0.4],
+        [1760, 0.4],
+        [2640, 0],
+      ].forEach(([f, pan], i) => {
+        voice({
+          frequency: f,
+          endFrequency: f * 0.3,
+          duration: 0.36 - i * 0.05,
+          type: 'sawtooth',
+          gain: 0.075 - i * 0.014,
+          attack: 0.001,
+          sustain: 0.3,
+          cutoff: 11000,
+          cutoffEnd: 900,
+          resonance: 11,
+          when: 0.06 + i * 0.012,
+          bus: sfxBus,
+          pan,
+          echo: 0.22,
+          verb: 0.4,
+        });
+      });
+      // 崩れ落ちる低域
+      voice({
+        frequency: 150,
+        endFrequency: 34,
+        duration: 0.6,
+        type: 'square',
+        gain: 0.16,
+        attack: 0.001,
+        sustain: 0.35,
+        cutoff: 900,
+        cutoffEnd: 120,
+        resonance: 5,
+        when: 0.06,
+        bus: sfxBus,
+      });
     } else if (kind === 'starBurst' || kind === 'burst') {
       noiseBurst({ duration: 0.48, gain: 0.25, frequency: 520, type: 'lowpass' });
       noiseBurst({ duration: 0.3, gain: 0.13, frequency: 1900, type: 'bandpass', when: 0.025 });
@@ -1640,6 +2206,9 @@ export function createGameAudio({ getState, enabled = true } = {}) {
   }
 
   return {
+    // 計測用: OfflineAudioContext では時間が自動で進まないため、
+    // スケジューラを外から回せるようにしておく
+    pump: pumpMusic,
     ensure,
     setEnabled,
     setVolumes,
