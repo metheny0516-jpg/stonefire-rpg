@@ -114,6 +114,27 @@ export const TOWNS = Object.freeze({
       "1111111111111111",
     ]),
   }),
+  4: Object.freeze({
+    name: "宵待ちの停",
+    subtitle: "黄昏の塔の足もとにある最後の停留所",
+    palette: "sky",
+    inn: 90,
+    spawn: Object.freeze({ x: 13, y: 10 }),
+    map: Object.freeze([
+      "1111111111111111",
+      "1111111111111111",
+      "1111111111111111",
+      "1151116111171181",
+      "1000000000000001",
+      "1000000000000001",
+      "1000990000000001",
+      "1000990000000001",
+      "1000000000000001",
+      "1000000000000001",
+      "1000000000000021",
+      "1111111111111111",
+    ]),
+  }),
 });
 
 // 装備。slot: weapon(武器) / armor(体防具)。owner: hero=ルカ mage=ミナ both=共用
@@ -150,15 +171,23 @@ export const ENEMIES = Object.freeze({
   golum: Object.freeze({ name: "晶殻のゴルム", maxHp: 105, atk: 22, def: 12, spd: 5, exp: 50, gold: 30, color: "#6ee7ff", behavior: "crystal", drops: [{ id: "skyCrystal", chance: 0.35 }] }),
   zepha: Object.freeze({ name: "風喰いゼファ", maxHp: 88, atk: 24, def: 8, spd: 17, exp: 54, gold: 32, color: "#55e0c6", behavior: "gale", drops: [{ id: "windSilk", chance: 0.35 }] }),
   boss3: Object.freeze({ name: "天穿のオルディア", maxHp: 330, atk: 30, def: 15, spd: 14, exp: 210, gold: 300, color: "#64dcff", boss: true, behavior: "astralBoss", drops: [{ id: "astralCore", chance: 1 }] }),
+  rust: Object.freeze({ name: "錆喰い", maxHp: 120, atk: 26, def: 10, spd: 7, exp: 62, gold: 34, color: "#b07a4a", behavior: "spore", drops: [{ id: "nightFeather", chance: 0.4 }] }),
+  emberEcho: Object.freeze({ name: "灯の残響", maxHp: 100, atk: 28, def: 8, spd: 12, exp: 58, gold: 30, color: "#ffb45c", behavior: "swift", drops: [{ id: "shadowFang", chance: 0.36 }] }),
+  mirror: Object.freeze({ name: "鏡写しのイド", maxHp: 140, atk: 31, def: 13, spd: 13, exp: 78, gold: 44, color: "#9fd0ff", behavior: "drain", drops: [{ id: "skyCrystal", chance: 0.34 }] }),
+  sandMoth: Object.freeze({ name: "砂時計蛾", maxHp: 115, atk: 34, def: 9, spd: 16, exp: 74, gold: 40, color: "#e5d6a0", behavior: "gale", drops: [{ id: "windSilk", chance: 0.38 }] }),
+  warden: Object.freeze({ name: "黄昏の衛士", maxHp: 175, atk: 38, def: 17, spd: 10, exp: 96, gold: 58, color: "#8f7bd6", behavior: "crystal", drops: [{ id: "skyCrystal", chance: 0.42 }] }),
+  silentArm: Object.freeze({ name: "静寂の腕", maxHp: 150, atk: 42, def: 12, spd: 15, exp: 92, gold: 54, color: "#6b6f8c", behavior: "charge", drops: [{ id: "shadowFang", chance: 0.44 }] }),
+  boss4: Object.freeze({ name: "黄昏のヴェスペル", maxHp: 480, atk: 46, def: 20, spd: 15, exp: 330, gold: 520, color: "#d08bff", boss: true, behavior: "astralBoss", drops: [{ id: "duskBell", chance: 1 }] }),
 });
 
 export const ENCOUNTERS = Object.freeze({
   1: Object.freeze(["moss", "bat"]),
   2: Object.freeze(["wisp", "wolf"]),
   3: Object.freeze(["golum", "zepha"]),
+  4: Object.freeze(["rust", "emberEcho"]),
 });
 
-export const BOSSES = Object.freeze({ 1: "boss", 2: "boss2", 3: "boss3" });
+export const BOSSES = Object.freeze({ 1: "boss", 2: "boss2", 3: "boss3", 4: "boss4" });
 
 export const SKILLS = Object.freeze([
   // ルカ: たたかう(=1.0倍)を基準に、段数・全体化・防御無視で役割を分ける
@@ -188,6 +217,7 @@ export const ITEMS = Object.freeze({
   skyCrystal: Object.freeze({ name: "蒼天晶", icon: "◇", desc: "星骸の塔で採れる淡青色の結晶", sell: 38 }),
   windSilk: Object.freeze({ name: "風紋の糸", icon: "≈", desc: "触れると微風を生む不思議な糸", sell: 36 }),
   astralCore: Object.freeze({ name: "天穿の核", icon: "✺", desc: "天穿のオルディアを倒した証", sell: 900, precious: true }),
+  duskBell: Object.freeze({ name: "黄昏の鐘", icon: "❂", desc: "黄昏のヴェスペルを倒した証", sell: 1400, precious: true }),
 });
 
 export const ASSETS = Object.freeze({
@@ -207,6 +237,13 @@ export const ASSETS = Object.freeze({
     golum: "./enemy-crystal-golum.png",
     zepha: "./enemy-wind-zepha.png",
     boss3: "./enemy-sky-boss-ordia.png",
+    rust: "./enemy-rust.png",
+    emberEcho: "./enemy-ember-echo.png",
+    mirror: "./enemy-mirror-id.png",
+    sandMoth: "./enemy-sand-moth.png",
+    warden: "./enemy-dusk-warden.png",
+    silentArm: "./enemy-silent-arm.png",
+    boss4: "./enemy-dusk-boss-vesper.png",
   }),
 });
 
@@ -227,5 +264,74 @@ export const CHAPTERS = Object.freeze({
   1: Object.freeze({ name: "石牢", full: "石牢の灯火", where: "灯火の里のふもと", start: Object.freeze({ x: 1, y: 10 }) }),
   2: Object.freeze({ name: "月影の森", full: "石牢の灯火・月影篇", where: "銀鈴の宿場のはずれ", start: Object.freeze({ x: 1, y: 10 }) }),
   3: Object.freeze({ name: "星骸の塔", full: "石牢の灯火・星骸篇", where: "雲海に浮かぶ回廊", start: Object.freeze({ x: 1, y: 10 }) }),
+  4: Object.freeze({ name: "黄昏の塔", full: "石牢の灯火・黄昏篇", where: "宵待ちの停の奥", start: Object.freeze({ x: 1, y: 10 }), tower: true }),
 });
-export const MAX_CHAPTER = 3;
+export const MAX_CHAPTER = 4;
+
+// --- 第4章「黄昏の塔」---------------------------------------------------
+// タイル: 0通路 / 1壁 / 2町へ / 3ボス / 4回復 / u上り階段 / d下り階段
+//         c宝箱 / p落とし穴
+// 落とし穴は開けた部屋に置いてあり、必ず避けて通れる。
+export const TOWER_FLOORS = 3;
+export const TOWER_MAPS = Object.freeze({
+  1: Object.freeze([
+    "1111111111111111",
+    "10000000000u0001",
+    "1011111111111111",
+    "1000000c00000001",
+    "1111111111111101",
+    "1000000040000001",
+    "1011111111111111",
+    "1000000000000001",
+    "1111111111111101",
+    "1000000000000001",
+    "1211111111111111",
+    "1111111111111111",
+  ]),
+  2: Object.freeze([
+    "1111111111111111",
+    "1000000000000u01",
+    "1000000000000001",
+    "1011011011011101",
+    "100p000000000c01",
+    "1000000000000001",
+    "1011011011011101",
+    "100000p000000001",
+    "1000000000000001",
+    "1011011011011101",
+    "1d0000000000c001",
+    "1111111111111111",
+  ]),
+  3: Object.freeze([
+    "1111111111111111",
+    "1000000300000001",
+    "1000000000000001",
+    "1011011011011101",
+    "10000p00000000c1",
+    "1000000040000001",
+    "1011011011011101",
+    "1000p00000000001",
+    "1000000000000001",
+    "1011011011011101",
+    "1d00000000000001",
+    "1111111111111111",
+  ]),
+});
+// 階ごとに出る魔物を入れ替える (2種ずつ)
+export const TOWER_ENCOUNTERS = Object.freeze({
+  1: Object.freeze(["rust", "emberEcho"]),
+  2: Object.freeze(["mirror", "sandMoth"]),
+  3: Object.freeze(["warden", "silentArm"]),
+});
+// 宝箱の中身。"階:x,y" で引く。
+export const TOWER_CHESTS = Object.freeze({
+  "1:7,3": Object.freeze({ gold: 140, item: "potion", amount: 2 }),
+  "2:13,4": Object.freeze({ item: "moonDrop", amount: 2 }),
+  "2:12,10": Object.freeze({ gold: 320 }),
+  "3:14,4": Object.freeze({ item: "starTonic", amount: 1, gold: 240 }),
+});
+// 落とし穴で落ちた先 (ひとつ下の階の、この座標に出る)
+export const TOWER_LANDING = Object.freeze({
+  1: Object.freeze({ x: 1, y: 9 }),
+  2: Object.freeze({ x: 1, y: 8 }),
+});
