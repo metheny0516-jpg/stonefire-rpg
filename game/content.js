@@ -503,6 +503,7 @@ export const ENEMIES = Object.freeze({
   }),
   boss4: Object.freeze({
     name: '黄昏のヴェスペル',
+    art: 1.02,
     maxHp: 900,
     atk: 50,
     def: 32,

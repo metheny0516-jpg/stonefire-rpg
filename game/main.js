@@ -39,7 +39,7 @@ import {
   writeActiveSlot,
   writeSlot,
 } from './save-store.js';
-import { createGameAudio } from './audio-engine.js?v=45-ch4-balance';
+import { createGameAudio } from './audio-engine.js?v=46-boss-art';
 (() => {
   'use strict';
   const C = document.querySelector('#game'),
