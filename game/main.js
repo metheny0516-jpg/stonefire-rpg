@@ -191,6 +191,16 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
     if (!raw) inv.potion = Math.max(0, legacy);
     return inv;
   }
+  // 回復を1人に適用する。戦闘不能から起こした場合は起こしたことを返す。
+  function applyHeal(src, target) {
+    if (!target) return { heal: 0, revived: false };
+    let revived = target.hp <= 0;
+    let heal = Math.min(healPower(src, target), target.maxHp - target.hp);
+    if (heal <= 0 && !revived) return { heal: 0, revived: false };
+    target.hp = Math.max(1, target.hp + heal);
+    floatText('+' + heal, target === state.hero ? 53 : 112, 175, revived ? '#ffe9a0' : '#9ffff0');
+    return { heal, revived };
+  }
   function healPower(src, target) {
     let flat = Number(src?.healAll || src?.heal) || 0,
       rate = Number(src?.rate) || 0;
@@ -1865,6 +1875,7 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
     state.enemy = state.enemies[0];
     let e = state.enemy;
     for (let member of [state.hero, state.companion]) {
+      member.deflect = 0;
       member.guarding = false;
       member.charged = false;
       member.expBoost = 1;
@@ -1968,11 +1979,16 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
     state.itemMenu = true;
     sync();
   }
-  function mostInjuredMember() {
-    let living = [state.hero, ...(state.companion.active ? [state.companion] : [])].filter(
-      v => v.hp > 0 && v.hp < v.maxHp,
-    );
-    return living.sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp)[0] || null;
+  // revive=true の回復手段は戦闘不能の仲間も対象にする。
+  // 倒れている仲間がいれば、そちらを最優先で選ぶ。
+  function mostInjuredMember(revive = false) {
+    let party = [state.hero, ...(state.companion.active ? [state.companion] : [])];
+    if (revive) {
+      let downed = party.filter(v => v.hp <= 0);
+      if (downed.length) return downed[0];
+    }
+    let hurt = party.filter(v => v.hp > 0 && v.hp < v.maxHp);
+    return hurt.sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp)[0] || null;
   }
   async function maybeSpark(member, action) {
     let candidates = SKILLS.filter(
@@ -2015,10 +2031,8 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
     let item = ITEMS[id];
     if (!item?.usable || itemCount(id) <= 0) return;
     let targets = item.healAll
-      ? [state.hero, ...(state.companion.active ? [state.companion] : [])].filter(
-          v => v.hp > 0 && v.hp < v.maxHp,
-        )
-      : [mostInjuredMember()].filter(Boolean);
+      ? healTargets(!!item.revive)
+      : [mostInjuredMember(!!item.revive)].filter(Boolean);
     if (!targets.length) {
       setMsg('回復が必要な仲間はいない。');
       return;
@@ -2028,13 +2042,21 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
     consumeItem(id);
     sfx('potion');
     let total = 0;
+    let raised = [];
     targets.forEach(target => {
-      let heal = Math.min(healPower(item, target), target.maxHp - target.hp);
-      target.hp += heal;
-      total += heal;
-      floatText('+' + heal, target === state.hero ? 53 : 112, 175, '#6eff90');
+      let r = applyHeal(item, target);
+      total += r.heal;
+      if (r.revived) raised.push(actorName(target));
     });
-    setMsg(actorName() + 'は ' + item.name + 'を使った！ HPが合計 ' + total + ' 回復！');
+    setMsg(
+      (raised.length ? raised.join('と') + 'が立ち上がった！ ' : '') +
+        actorName() +
+        'は ' +
+        item.name +
+        'を使った！ HPが合計 ' +
+        total +
+        ' 回復！',
+    );
     sync();
     await delay(650);
     await finishActorTurn('item');
@@ -2046,9 +2068,9 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
       i = others.indexOf(foe);
     return i <= 0 ? 283 : 186;
   }
-  function healTargets() {
-    return [state.hero, ...(state.companion.active ? [state.companion] : [])].filter(
-      v => v.hp > 0 && v.hp < v.maxHp,
+  function healTargets(revive = false) {
+    return [state.hero, ...(state.companion.active ? [state.companion] : [])].filter(v =>
+      revive ? v.hp < v.maxHp : v.hp > 0 && v.hp < v.maxHp,
     );
   }
   function skillMotion(s) {
@@ -2087,9 +2109,13 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
     if (forcedTarget) state.enemy = forcedTarget;
     if (!s.heal && !s.healAll && (!state.enemy || state.enemy.hp <= 0) && !chooseEnemyTarget()) return;
     state.targetMenu = false;
-    let group = s.healAll ? healTargets() : null,
-      target = s.heal ? mostInjuredMember() : null;
-    if ((s.heal && !target) || (s.healAll && !group.length)) {
+    let group = s.healAll ? healTargets(!!s.revive) : null,
+      target = s.heal ? mostInjuredMember(!!s.revive) : null;
+    if (s.deflect) {
+      group = null;
+      target = null;
+    }
+    if (!s.deflect && ((s.heal && !target) || (s.healAll && !group.length))) {
       setMsg('HPは全員満タンだ。');
       state.skillMenu = false;
       sync();
@@ -2102,21 +2128,38 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
     let charged = !!member.charged;
     member.charged = false;
     member.chargeUsed = charged;
-    if (s.heal || s.healAll) {
+    if (s.deflect) {
+      // 構えを取る。次に来る攻撃を指定回数だけ弾く
+      await skillMotion(s);
+      let who = s.target === 'all' ? livingMembers() : [member];
+      who.forEach(t => {
+        t.deflect = Math.max(t.deflect || 0, s.deflect);
+      });
+      sfx('guard');
+      setMsg(
+        (s.target === 'all' ? '仲間全員' : actorName(member)) +
+          'は構えを取った！ 次の' +
+          s.deflect +
+          '回の攻撃を弾く。',
+      );
+      sync();
+      draw();
+    } else if (s.heal || s.healAll) {
       await skillMotion(s);
       let list = s.healAll ? group : [target],
-        total = 0;
+        total = 0,
+        raised = [];
       list.forEach(t => {
-        let heal = Math.min(healPower(s, t), t.maxHp - t.hp);
-        t.hp += heal;
-        total += heal;
-        floatText('+' + heal, t === state.hero ? 53 : 112, 175, '#9ffff0');
+        let r = applyHeal(s, t);
+        total += r.heal;
+        if (r.revived) raised.push(actorName(t));
       });
-      sfx('heal');
+      sfx(raised.length ? 'level' : 'heal');
       setMsg(
-        s.healAll
-          ? '仲間全員のHPが 合計' + total + ' 回復！'
-          : actorName(target) + 'のHPが ' + total + ' 回復！',
+        (raised.length ? raised.join('と') + 'が立ち上がった！ ' : '') +
+          (s.healAll
+            ? '仲間全員のHPが 合計' + total + ' 回復！'
+            : actorName(target) + 'のHPが ' + total + ' 回復！'),
       );
       sync();
     } else {
@@ -2148,7 +2191,25 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
       sfx('hit');
       vibrate(28);
       flashEnemy();
-      setMsg(foes.length > 1 ? '魔物' + foes.length + '体に 合計' + sum + ' ダメージ！' : lines[0]);
+      let extra = '';
+      if (s.stun) {
+        // 行動不能。倒した相手には付けない
+        let stunned = foes.filter(f => f.hp > 0);
+        stunned.forEach(f => {
+          f.stunned = Math.max(f.stunned || 0, s.stun);
+        });
+        if (stunned.length) extra += ' ' + stunned.map(f => f.name).join('と') + 'の動きが止まった！';
+      }
+      if (s.drain && sum > 0) {
+        let back = Math.min(Math.round(sum * s.drain), member.maxHp - member.hp);
+        if (back > 0) {
+          member.hp += back;
+          floatText('+' + back, member === state.hero ? 53 : 112, 175, '#ff9fd0');
+          extra += ' ' + actorName(member) + 'は ' + back + ' 吸収した！';
+        }
+      }
+      setMsg((foes.length > 1 ? '魔物' + foes.length + '体に 合計' + sum + ' ダメージ！' : lines[0]) + extra);
+      sync();
       draw();
     }
     await delay(600);
@@ -2953,6 +3014,21 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
   }
   async function enemyHit(target, multiplier, label, savage = false) {
     if (!target || target.hp <= 0) return 0;
+    // 弾き: 構えている間は攻撃を丸ごと無効にする
+    if (target.deflect > 0) {
+      target.deflect -= 1;
+      sfx('guard');
+      floatText('弾いた!', target === state.hero ? 53 : 112, 178, '#8fe4ff', 0.9);
+      setMsg(
+        actorName(target) +
+          'は攻撃を弾いた！' +
+          (target.deflect > 0 ? '（あと' + target.deflect + '回）' : ''),
+      );
+      sync();
+      draw();
+      await delay(520);
+      return 0;
+    }
     let isHero = target === state.hero,
       name = isHero ? 'ルカ' : 'ミナ',
       d = Math.max(
@@ -3075,6 +3151,14 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
         let e = (state.enemies || [])[u.i];
         if (!e || e.hp <= 0) continue;
         state.enemy = e;
+        if (e.stunned > 0) {
+          e.stunned -= 1;
+          setMsg(e.name + 'は動けない！');
+          sync();
+          draw();
+          await delay(620);
+          continue;
+        }
         await enemyAct(e);
         if (state.mode !== 'battle') return;
         continue;
@@ -3714,7 +3798,9 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
       return;
     sfx('menuOpen');
     let entries = inventoryEntries(),
-      canHeal = !!mostInjuredMember();
+      canHeal = !!mostInjuredMember(),
+      // 蘇生できる薬は、倒れている仲間しかいない時でも使える
+      canRevive = !!mostInjuredMember(true);
     $('#overlay').classList.remove('clear-screen', 'slot-screen');
     $('#overlay').classList.add('town-screen');
     $('#overlayCard').innerHTML =
@@ -3734,13 +3820,41 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
                 (sellPriceOf(id) ? '　／ 道具屋で ' + sellPriceOf(id) + 'G' : '') +
                 '</small></div>' +
                 (item.usable
-                  ? '<button data-field-item="' + id + '" ' + (canHeal ? '' : 'disabled') + '>使う</button>'
+                  ? '<button data-field-item="' +
+                    id +
+                    '" ' +
+                    ((item.revive ? canRevive : canHeal) ? '' : 'disabled') +
+                    '>使う</button>'
                   : '') +
                 '</div>',
             )
             .join('')
         : '<p>かばんは空っぽだ。</p>') +
-      '</div><p class="bag-slot">所持 ' +
+      '</div>' +
+      (() => {
+        let sk = fieldHealSkills();
+        if (!sk.length) return '';
+        return (
+          '<div class="bag-list">' +
+          sk
+            .map(
+              v =>
+                '<div class="bag-row"><div><b>✦ ' +
+                v.name +
+                '</b><small>' +
+                v.desc +
+                '　残' +
+                (state.skillUses[v.id] || 0) +
+                '回</small></div>' +
+                '<button data-field-skill="' +
+                v.id +
+                '">つかう</button></div>',
+            )
+            .join('') +
+          '</div>'
+        );
+      })() +
+      '<p class="bag-slot">所持 ' +
       gold() +
       'G　／　セーブ枠 ' +
       currentSlot() +
@@ -3768,25 +3882,75 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
     $('#overlayCard')
       .querySelectorAll('[data-field-item]')
       .forEach(button => (button.onclick = () => consumeFieldItem(button.dataset.fieldItem)));
+    $('#overlayCard')
+      .querySelectorAll('[data-field-skill]')
+      .forEach(button => (button.onclick = () => useFieldSkill(button.dataset.fieldSkill)));
+  }
+  // フィールドで使える回復ワザ。残り回数は戦闘と共通で、
+  // 次の戦闘が始まると補充される。
+  function fieldHealSkills() {
+    return SKILLS.filter(sk => {
+      if (!sk.heal && !sk.healAll) return false;
+      let owner = sk.owner === 'mage' ? state.companion : state.hero;
+      if (!owner || (sk.owner === 'mage' && !owner.active) || owner.hp <= 0) return false;
+      if (!(owner.learnedSkills || []).includes(sk.id)) return false;
+      return (state.skillUses?.[sk.id] || 0) > 0;
+    });
+  }
+  function useFieldSkill(id) {
+    let sk = SKILLS.find(v => v.id === id);
+    if (!sk || !fieldHealSkills().some(v => v.id === id)) return;
+    let targets = sk.healAll ? healTargets(!!sk.revive) : [mostInjuredMember(!!sk.revive)].filter(Boolean);
+    if (!targets.length) {
+      setMsg('HPは全員満タンだ。');
+      sync();
+      return;
+    }
+    state.skillUses[id] = Math.max(0, (state.skillUses[id] || 0) - 1);
+    let total = 0,
+      raised = [];
+    targets.forEach(t => {
+      let r = applyHeal(sk, t);
+      total += r.heal;
+      if (r.revived) raised.push(actorName(t));
+    });
+    sfx(raised.length ? 'level' : 'heal');
+    setMsg(
+      (raised.length ? raised.join('と') + 'が立ち上がった！ ' : '') +
+        '「' +
+        sk.name +
+        '」でHPが合計 ' +
+        total +
+        ' 回復した！',
+    );
+    sync();
+    draw();
+    saveGame();
+    hideOverlay();
   }
   function consumeFieldItem(id) {
     let item = ITEMS[id];
     if (!item?.usable || itemCount(id) <= 0) return;
     let targets = item.healAll
-      ? [state.hero, ...(state.companion.active ? [state.companion] : [])].filter(
-          v => v.hp > 0 && v.hp < v.maxHp,
-        )
-      : [mostInjuredMember()].filter(Boolean);
+      ? healTargets(!!item.revive)
+      : [mostInjuredMember(!!item.revive)].filter(Boolean);
     if (!targets.length) return;
     consumeItem(id);
     let total = 0;
+    let raised = [];
     targets.forEach(target => {
-      let heal = Math.min(healPower(item, target), target.maxHp - target.hp);
-      target.hp += heal;
-      total += heal;
+      let r = applyHeal(item, target);
+      total += r.heal;
+      if (r.revived) raised.push(actorName(target));
     });
-    sfx('potion');
-    setMsg(item.name + 'を使い、HPが合計 ' + total + ' 回復した！');
+    sfx(raised.length ? 'level' : 'potion');
+    setMsg(
+      (raised.length ? raised.join('と') + 'が立ち上がった！ ' : '') +
+        item.name +
+        'を使い、HPが合計 ' +
+        total +
+        ' 回復した！',
+    );
     sync();
     draw();
     saveGame();
