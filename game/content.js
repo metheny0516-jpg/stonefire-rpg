@@ -180,6 +180,7 @@ export const SKILLS = Object.freeze([
 export const ITEMS = Object.freeze({
   potion: Object.freeze({ name: "くすり", icon: "◆", desc: "仲間1人のHPを18回復", usable: true, heal: 18, price: 20, sell: 8 }),
   moonDrop: Object.freeze({ name: "月のしずく", icon: "☾", desc: "仲間全員のHPを12回復", usable: true, healAll: 12, price: 60, sell: 24 }),
+  starTonic: Object.freeze({ name: "星雫の霊薬", icon: "✧", desc: "仲間全員のHPを30回復（合成でしか作れない）", usable: true, healAll: 30, sell: 60 }),
   nightFeather: Object.freeze({ name: "夜羽", icon: "♢", desc: "ヨルハネが落とす黒紫の羽", sell: 12 }),
   flameHorn: Object.freeze({ name: "焔角の欠片", icon: "▲", desc: "焔角のガルドを倒した証", sell: 180, precious: true }),
   shadowFang: Object.freeze({ name: "影牙のかけら", icon: "†", desc: "冷たい魔力を帯びた牙", sell: 24 }),
@@ -208,3 +209,15 @@ export const ASSETS = Object.freeze({
     boss3: "./enemy-sky-boss-ordia.png",
   }),
 });
+
+// 道具屋の「合成」タブで使うレシピ。
+// 素材を売った金額より完成品の価値が上回るようにしてある（そうしないと
+// 「素材を売ってから買う」ほうが得になり、合成する意味が無くなる）。
+export const ITEM_RECIPES = Object.freeze([
+  // 夜羽×2 (売値24G) → くすり×2 (買値40G相当)
+  Object.freeze({ id: "potion", amount: 2, needs: Object.freeze({ nightFeather: 2 }) }),
+  // 影牙のかけら×2 (売値48G) → 月のしずく×1 (買値60G)
+  Object.freeze({ id: "moonDrop", amount: 1, needs: Object.freeze({ shadowFang: 2 }) }),
+  // 蒼天晶+風紋の糸 (売値74G) → 星雫の霊薬×1 (店では買えない)
+  Object.freeze({ id: "starTonic", amount: 1, needs: Object.freeze({ skyCrystal: 1, windSilk: 1 }) }),
+]);

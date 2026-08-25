@@ -1,7 +1,7 @@
-import { ASSETS, BOSSES, ENCOUNTERS, ENEMIES, EQUIPMENT, ITEMS, MAPS, SKILLS, STARTING_GEAR, TILE_SIZE, TOWNS } from './content.js';
+import { ITEM_RECIPES, ASSETS, BOSSES, ENCOUNTERS, ENEMIES, EQUIPMENT, ITEMS, MAPS, SKILLS, STARTING_GEAR, TILE_SIZE, TOWNS } from './content.js';
 import { criticalRateForLevel, effectiveDefense, resolveHeroAttack, rollDrops, rollEncounterGroup, selectEnemyAction, sparkChanceForAction } from './battle-rules.js';
 import { clearSlot, isSlot, migrateLegacySave, readActiveSlot, readSlot, SAVE_VERSION, slotSummaries, writeActiveSlot, writeSlot } from './save-store.js';
-import { createGameAudio } from './audio-engine.js?v=30-battle';
+import { createGameAudio } from './audio-engine.js?v=36-craft';
 (()=>{'use strict';const C=document.querySelector('#game'),X=C.getContext('2d'),W=C.width,H=C.height,$=s=>document.querySelector(s),wrap=$('#screenWrap'),battleHeroImg=new Image(),battleHeroCut=document.createElement('canvas'),mageBattleImg=new Image(),mageBattleCut=document.createElement('canvas'),battleHeroFrames=[],mageBattleFrames=[],enemyCuts={},enemyReady={},fieldSprites={},fieldReady={},AUDIO_KEY='stonefire-audio-v1',T=TILE_SIZE,enemies=ENEMIES;let battleHeroReady=false,mageBattleReady=false,audioOn=true,gameAudio=null;try{audioOn=localStorage.getItem(AUDIO_KEY)!=='off'}catch(_){}X.imageSmoothingEnabled=false;
 let state;
 const BATTLE_EFFECTS=Object.freeze({
@@ -262,6 +262,9 @@ function openInn(){
 // --- 店 ---
 let shopKind='weapon',shopMode='buy';
 function shopTitle(kind){return{weapon:'武器屋',armor:'防具屋',item:'道具屋'}[kind]||'店'}
+function canCraft(r){return Object.entries(r.needs).every(([mat,n])=>itemCount(mat)>=n)}
+function craftNote(r){return Object.entries(r.needs).map(([mat,n])=>ITEMS[mat].name+" ×"+n+"（所持"+itemCount(mat)+"）").join("　")+"　→ "+ITEMS[r.id].name+" ×"+r.amount}
+function doCraft(r){if(!canCraft(r))return false;Object.entries(r.needs).forEach(([mat,n])=>{for(let i=0;i<n;i++)consumeItem(mat)});addItem(r.id,r.amount);return true}
 function shopStock(kind){
  if(kind==='item')return Object.keys(ITEMS).filter(id=>ITEMS[id].price);
  return Object.keys(EQUIPMENT).filter(id=>EQUIPMENT[id].slot===kind&&EQUIPMENT[id].chapter<=state.chapter);
@@ -277,7 +280,9 @@ function shopRow(id,action,price,label,note){
 function openShop(kind){shopKind=kind;shopMode='buy';sfx('menuOpen');renderShop()}
 function renderShop(){
  let kind=shopKind,rows;
- if(shopMode==='buy'){
+ if(shopMode==='craft'&&kind==='item'){
+  rows=ITEM_RECIPES.map(r=>shopRow(r.id,'craft',0,canCraft(r)?'作る':'素材不足',craftNote(r))).join('');
+ }else if(shopMode==='buy'){
   let stock=shopStock(kind);
   rows=stock.map(id=>{let price=priceOf(id),note=EQUIPMENT[id]?gearNote(id):(ITEMS[id].desc+'　所持'+itemCount(id));
    return shopRow(id,'buy',price,gold()>=price?price+'G':'不足',note)}).join('');
@@ -291,7 +296,7 @@ function renderShop(){
    :'<p class="shop-note">売れるものを持っていない。</p>';
  }
  openTownCard('<h1>'+shopTitle(kind)+'</h1>'
-  +'<div class="shop-tabs"><button class="'+(shopMode==='buy'?'on':'')+'" data-shopmode="buy">買う</button><button class="'+(shopMode==='sell'?'on':'')+'" data-shopmode="sell">売る</button></div>'
+  +'<div class="shop-tabs"><button class="'+(shopMode==='buy'?'on':'')+'" data-shopmode="buy">買う</button><button class="'+(shopMode==='sell'?'on':'')+'" data-shopmode="sell">売る</button>'+(kind==='item'?'<button class="'+(shopMode==='craft'?'on':'')+'" data-shopmode="craft">合成</button>':'')+'</div>'
   +'<p class="shop-gold">所持 '+gold()+'G</p><div class="shop-list">'+rows+'</div>'
   +'<button id="shopEquip">そうび</button><button id="shopLeave">店を出る</button>');
  $('#shopLeave').onclick=closeTownCard;
@@ -301,6 +306,10 @@ function renderShop(){
   let id=b.dataset.buy,price=priceOf(id);if(gold()<price){sfx('cancel');return}
   addGold(-price);if(EQUIPMENT[id])addGear(id,1);else addItem(id,1);
   sfx('itemGet');renderShop();saveGame()});
+ $('#overlayCard').querySelectorAll('[data-craft]').forEach(b=>b.onclick=()=>{
+  let r=ITEM_RECIPES.find(x=>x.id===b.dataset.craft);
+  if(!r||!doCraft(r)){sfx('cancel');return}
+  sfx('itemGet');renderShop();sync();saveGame()});
  $('#overlayCard').querySelectorAll('[data-sell]').forEach(b=>{let armed=false;b.onclick=()=>{
   let id=b.dataset.sell,price=sellPriceOf(id);
   if(ITEMS[id]?.precious&&!armed){armed=true;sfx('cancel');b.textContent='本当に売る？';return}

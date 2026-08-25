@@ -32,7 +32,7 @@
 .town-screen .card h1{font-size:20px;margin:0 0 6px}
 .shop-note{font-size:12px;line-height:1.45;color:#c3cade;margin:0 0 8px}
 .shop-gold{font-size:12px;color:var(--gold);margin:6px 0;text-align:right}
-.shop-tabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:4px}
+.shop-tabs{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:6px;margin-bottom:4px}
 .shop-tabs button{min-height:32px;padding:3px 8px;font-size:13px;margin:0;background:#1a2130}
 .shop-tabs button.on{background:#3d4a68;border-color:var(--gold);color:var(--gold)}
 .shop-list{display:grid;gap:6px;margin-bottom:8px}
