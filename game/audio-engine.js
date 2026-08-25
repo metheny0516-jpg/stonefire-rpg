@@ -216,6 +216,44 @@ function impulseResponse(ctx, seconds = 1.5, decay = 2.6) {
   return buffer;
 }
 
+// 打撃用の短い部屋鳴り。長い尾を持たせない。
+// ホール残響(1.5秒)に打撃を送ると、余韻が伸びて「ポーン」と鳴ってしまう。
+function roomResponse(ctx, seconds = 0.22) {
+  const rate = ctx.sampleRate;
+  const length = Math.floor(rate * seconds);
+  const buffer = ctx.createBuffer(2, length, rate);
+  for (let channel = 0; channel < 2; channel += 1) {
+    const data = buffer.getChannelData(channel);
+    const skew = channel === 0 ? 1 : 1.17;
+    for (let i = 0; i < length; i += 1) {
+      const t = i / length;
+      data[i] = (Math.random() * 2 - 1) * Math.pow(1 - t, 7) * 0.5;
+    }
+    [
+      [0.004, 0.7],
+      [0.009, 0.5],
+      [0.016, 0.34],
+      [0.026, 0.2],
+    ].forEach(([time, amp], k) => {
+      const at = Math.floor(rate * time * skew);
+      if (at < length) data[at] += k % 2 ? -amp : amp;
+    });
+  }
+  return buffer;
+}
+
+// 潰れるまで叩き込むためのハードクリップ。tanh より角が立つ。
+function clipCurve(drive = 4, ceiling = 0.9) {
+  const n = 2048;
+  const curve = new Float32Array(n);
+  for (let i = 0; i < n; i += 1) {
+    const x = (i / (n - 1)) * 2 - 1;
+    const y = Math.max(-1, Math.min(1, x * drive));
+    curve[i] = Math.sign(y) * Math.pow(Math.abs(y), 0.8) * ceiling;
+  }
+  return curve;
+}
+
 // tanh 風の飽和カーブ。倍音が増えて、同じ音量でも前に出る。
 function saturationCurve(amount = 3) {
   const n = 2048;
@@ -244,8 +282,13 @@ export function createGameAudio({ getState, enabled = true } = {}) {
   let master = null;
   let limiter = null;
   let sfxSat = null;
+  let punchBus = null;
+  let punchClip = null;
+  let roomVerb = null;
+  let roomSend = null;
   let leadSat = null;
   let leadBus = null;
+  let musicEcho = null;
   let echoL = null,
     echoR = null,
     echoFb = null,
@@ -282,7 +325,7 @@ export function createGameAudio({ getState, enabled = true } = {}) {
       master.gain.value = 0.88;
       bgmMaster.gain.value = bgmVolume;
       sfxBus.gain.value = seVolume;
-      reverbSend.gain.value = 0.2;
+      reverbSend.gain.value = 0.07;
       bgmVerbSend.gain.value = 0.16;
       bgmBuses = [ctx.createGain(), ctx.createGain()];
       bgmBuses[0].gain.value = 1;
@@ -298,6 +341,23 @@ export function createGameAudio({ getState, enabled = true } = {}) {
       sfxSat.connect(master);
       sfxSat.connect(reverbSend).connect(reverb);
       reverb.connect(master);
+
+      // 打撃専用バス。ハードクリップで角を立ててから効果音バスへ。
+      punchClip = ctx.createWaveShaper();
+      punchClip.curve = clipCurve(3.4, 0.9);
+      punchClip.oversample = '2x';
+      punchBus = ctx.createGain();
+      punchBus.gain.value = 0.62;
+      punchBus.connect(punchClip);
+      punchClip.connect(sfxBus);
+
+      // 打撃だけに使う短い部屋鳴り。ホール残響とは別系統。
+      roomVerb = ctx.createConvolver();
+      roomVerb.buffer = roomResponse(ctx);
+      roomSend = ctx.createGain();
+      roomSend.gain.value = 0.9;
+      roomSend.connect(roomVerb);
+      roomVerb.connect(master);
 
       // 主旋律用の飽和バス。鋸波をここに通すと芯が出る。
       leadSat = ctx.createWaveShaper();
@@ -320,6 +380,11 @@ export function createGameAudio({ getState, enabled = true } = {}) {
       echoTone.frequency.value = 2600;
       echoSend = ctx.createGain();
       echoSend.gain.value = 1;
+      // 送りは音量調整より前に分岐するので、そのままだと BGM を絞っても
+      // 反響だけ残ってしまう。音楽用の送りは BGM 音量に追従させる。
+      musicEcho = ctx.createGain();
+      musicEcho.gain.value = bgmVolume;
+      musicEcho.connect(echoSend);
       const panL = ctx.createStereoPanner();
       const panR = ctx.createStereoPanner();
       panL.pan.value = -0.72;
@@ -366,6 +431,7 @@ export function createGameAudio({ getState, enabled = true } = {}) {
     seVolume = Math.max(0, Math.min(1, se));
     if (!ctx) return;
     bgmMaster.gain.setTargetAtTime(bgmVolume, ctx.currentTime, 0.02);
+    if (musicEcho) musicEcho.gain.setTargetAtTime(bgmVolume, ctx.currentTime, 0.02);
     sfxBus.gain.setTargetAtTime(seVolume, ctx.currentTime, 0.02);
   }
 
@@ -534,9 +600,10 @@ export function createGameAudio({ getState, enabled = true } = {}) {
     filter.connect(out).connect(panner);
     panner.connect(target || bgmMaster);
     if (echo > 0 && echoSend) {
+      const dest = target === sfxBus || target === punchBus ? echoSend : musicEcho || echoSend;
       const e = ctx.createGain();
       e.gain.value = echo;
-      panner.connect(e).connect(echoSend);
+      panner.connect(e).connect(dest);
     }
     if (verb > 0 && reverb) {
       const v = ctx.createGain();
@@ -546,69 +613,96 @@ export function createGameAudio({ getState, enabled = true } = {}) {
   }
 
   // ---- 打撃の芯 ----
-  // 立ち上がりの一撃(クリック) / 胴鳴り / サブ の3層を、
-  // それぞれ別の減衰で重ねる。1層だけだと「バシッ」にならない。
+  // ほぼ全部を短いノイズで組む。音程のある音を長く伸ばすと
+  // 途端に「ポーン」と柔らかく鳴ってしまうため。
   function impact({
     when = 0,
     power = 1,
     tone = 1,
     body = 220,
-    sub = 60,
+    sub = 58,
     click = 6000,
-    noiseLen = 0.18,
+    noiseLen = 0.1,
     verb = 0.25,
+    weight = 1,
   }) {
     if (!ensure()) return;
-    // 1) トランジェント: 1ms で立ち上がる高域のクリック
+    const out = punchBus || sfxBus;
+    // 「ポーン」と鳴るのは、長く伸びる音程のある音が入っているから。
+    // 重い打撃はほぼ全部が短いノイズで、音程を感じさせない。
+    // 1) アタック: 5ms で終わる広帯域の一撃
     noiseBurst({
-      duration: 0.022,
-      gain: 0.34 * power,
+      duration: 0.008,
+      gain: 0.55 * power,
+      frequency: 110,
+      type: 'highpass',
+      attack: 0.0004,
+      when,
+      bus: out,
+      curve: 1.0,
+    });
+    noiseBurst({
+      duration: 0.016,
+      gain: 0.45 * power,
       frequency: click * tone,
       type: 'highpass',
-      attack: 0.0005,
+      attack: 0.0004,
       when,
-      curve: 3.2,
+      bus: out,
+      curve: 3.5,
     });
-    // 2) 胴鳴り: 帯域を絞ったノイズを、フィルターを閉じながら
+    // 2) 潰れる質感: 帯域の違う短いノイズを僅かにずらして重ねる
+    [
+      [body * 1.0, 0.05, 0.36],
+      [body * 3.2, 0.034, 0.28],
+      [body * 8.0, 0.022, 0.18],
+    ].forEach(([f, dur, g], k) => {
+      noiseBurst({
+        duration: dur + noiseLen * 0.25,
+        gain: g * power,
+        frequency: f * tone,
+        frequencyEnd: f * tone * 0.42,
+        type: 'bandpass',
+        q: 1.1,
+        attack: 0.0006,
+        when: when + k * 0.004,
+        bus: out,
+        curve: 2.4,
+      });
+    });
+    // 3) 胴体: ローパスした短い塊。これが「ドッ」の重さ
     noiseBurst({
-      duration: noiseLen,
-      gain: 0.26 * power,
-      frequency: body * 4 * tone,
-      type: 'bandpass',
-      q: 0.9,
-      attack: 0.001,
-      when,
-      curve: 1.5,
-    });
-    // 3) 芯: ピッチを一気に落とす。これが「重さ」になる
-    oscillator({
-      frequency: body * 1.9,
-      endFrequency: body * 0.42,
-      duration: noiseLen * 1.35,
-      type: 'triangle',
-      gain: 0.3 * power,
+      duration: 0.07 + noiseLen * 0.35,
+      gain: 0.44 * power * weight,
+      frequency: body * 1.7 * tone,
+      frequencyEnd: 85,
+      type: 'lowpass',
+      q: 0.7,
       attack: 0.0008,
       when,
+      bus: out,
+      curve: 2.0,
     });
-    // 4) サブ: 体で感じる帯域
+    // 4) サブ: 短く、掃引も浅く。ここを長く下げると途端に「ポーン」になる
     oscillator({
-      frequency: sub * 2.1,
-      endFrequency: sub * 0.62,
-      duration: noiseLen * 2.0,
+      frequency: sub * 1.4,
+      endFrequency: sub * 0.86,
+      duration: 0.065 + noiseLen * 0.3,
       type: 'sine',
-      gain: 0.26 * power,
+      gain: 0.46 * power * weight,
       attack: 0.001,
       when,
+      bus: out,
     });
-    // 5) 余韻: 短い残響へ送って空間に置く
-    if (verb > 0 && reverb) {
+    // 5) 部屋鳴り: 短い残響だけ。ホールへは送らない
+    if (verb > 0 && roomSend) {
       noiseBurst({
-        duration: 0.09,
-        gain: 0.1 * power * verb,
-        frequency: body * 3,
+        duration: 0.028,
+        gain: 0.3 * power * verb,
+        frequency: body * 2.2,
         type: 'bandpass',
         when,
-        bus: reverbSend,
+        bus: roomSend,
       });
     }
   }
@@ -646,7 +740,7 @@ export function createGameAudio({ getState, enabled = true } = {}) {
         gain: gain * echo,
         attack: 0.01,
         when,
-        bus: echoSend,
+        bus: musicEcho || echoSend,
       });
     }
   }
@@ -1620,7 +1714,16 @@ export function createGameAudio({ getState, enabled = true } = {}) {
         pan: -0.25,
       });
       // 刃が当たる瞬間
-      impact({ when: 0.055, power: 1.0, tone: 1.5, body: 300, sub: 78, click: 8200, noiseLen: 0.13 });
+      impact({
+        when: 0.055,
+        power: 1.05,
+        tone: 1.6,
+        body: 320,
+        sub: 66,
+        click: 8600,
+        noiseLen: 0.11,
+        weight: 0.62,
+      });
       // 金属の鳴き。フィルターを閉じながら落とす
       voice({
         frequency: 2100,
@@ -1639,7 +1742,16 @@ export function createGameAudio({ getState, enabled = true } = {}) {
         verb: 0.3,
       });
     } else if (kind === 'normalImpact' || kind === 'hit') {
-      impact({ power: 1.15, tone: 1.0, body: 240, sub: 62, click: 6200, noiseLen: 0.19, verb: 0.32 });
+      impact({
+        power: 1.2,
+        tone: 0.95,
+        body: 235,
+        sub: 58,
+        click: 6000,
+        noiseLen: 0.2,
+        verb: 0.3,
+        weight: 1.25,
+      });
       // 骨に響くような低い唸りを足す
       voice({
         frequency: 190,
@@ -1659,7 +1771,16 @@ export function createGameAudio({ getState, enabled = true } = {}) {
       noiseBurst({ duration: 0.11, gain: 0.095, frequency: 2100, type: 'highpass' });
       oscillator({ frequency: 520, endFrequency: 250, duration: 0.1, type: 'triangle', gain: 0.045 });
     } else if (kind === 'staffImpact') {
-      impact({ power: 1.0, tone: 0.8, body: 200, sub: 55, click: 4600, noiseLen: 0.17, verb: 0.3 });
+      impact({
+        power: 1.05,
+        tone: 0.78,
+        body: 195,
+        sub: 54,
+        click: 4400,
+        noiseLen: 0.18,
+        verb: 0.28,
+        weight: 1.15,
+      });
       voice({
         frequency: 520,
         endFrequency: 150,
@@ -1679,7 +1800,16 @@ export function createGameAudio({ getState, enabled = true } = {}) {
       noiseBurst({ duration: 0.2, gain: 0.09, frequency: 2600, type: 'highpass' });
       oscillator({ frequency: 720, endFrequency: 1280, duration: 0.13, type: 'triangle', gain: 0.035 });
     } else if (kind === 'enemy') {
-      impact({ power: 0.95, tone: 0.62, body: 165, sub: 48, click: 3200, noiseLen: 0.21, verb: 0.3 });
+      impact({
+        power: 1.1,
+        tone: 0.58,
+        body: 150,
+        sub: 44,
+        click: 3000,
+        noiseLen: 0.22,
+        verb: 0.28,
+        weight: 1.35,
+      });
       voice({
         frequency: 240,
         endFrequency: 62,
@@ -1748,7 +1878,8 @@ export function createGameAudio({ getState, enabled = true } = {}) {
         sub: 46,
         click: 9000,
         noiseLen: 0.3,
-        verb: 0.6,
+        verb: 0.55,
+        weight: 1.4,
       });
       // 三層の金属の悲鳴を左右に振る
       [
