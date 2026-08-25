@@ -1,5 +1,5 @@
-const BGM_VOLUME = 0.24;
-const SE_VOLUME = 0.78;
+const BGM_VOLUME = 0.9;
+const SE_VOLUME = 0.58;
 const STEP_SECONDS = 60 / 162 / 4;
 const BOSS_STEP_SECONDS = 60 / 172 / 4;
 const BATTLE_STEPS = 16 * 16;
@@ -115,6 +115,7 @@ export function trackForState(state) {
 export function createGameAudio({ getState, enabled = true } = {}) {
   let ctx = null;
   let master = null;
+  let limiter = null;
   let bgmMaster = null;
   let bgmBuses = [];
   let activeBus = 0;
@@ -157,7 +158,15 @@ export function createGameAudio({ getState, enabled = true } = {}) {
       sfxBus.connect(master);
       sfxBus.connect(reverbSend).connect(reverb);
       reverb.connect(master);
-      master.connect(ctx.destination);
+      // BGM を上げたぶん、まとめてリミッターに通して歪みを防ぐ。
+      // 効果音のピークで BGM がわずかに沈むので、打撃の抜けも良くなる。
+      limiter = ctx.createDynamicsCompressor();
+      limiter.threshold.value = -10;
+      limiter.knee.value = 6;
+      limiter.ratio.value = 8;
+      limiter.attack.value = 0.003;
+      limiter.release.value = 0.18;
+      master.connect(limiter).connect(ctx.destination);
       currentTrack = trackForState(getState && getState());
       trackStep = 0;
       nextStepAt = ctx.currentTime + 0.05;
@@ -555,23 +564,31 @@ export function createGameAudio({ getState, enabled = true } = {}) {
   function sfx(kind) {
     if (!ensure()) return;
     if (["starImpact", "starBurst", "moonBurst", "critical", "bossDefeat", "bossAppear", "spark", "chapterStart"].includes(kind)) duck(650, 0.18);
+    else if (["hit", "normalImpact", "slash", "blade", "staffImpact", "enemy"].includes(kind)) duck(200, 0.55);
+    else if (kind === "win") duck(1900, 0.3);
     if (kind === "silence") { duck(520, 0.06); return; }
 
     if (kind === "blade" || kind === "slash") {
-      noiseBurst({ duration: 0.15, gain: 0.14, frequency: 3500, type: "highpass" });
-      oscillator({ frequency: 1320, endFrequency: 510, duration: 0.13, type: "triangle", gain: 0.07 });
-      oscillator({ frequency: 2260, endFrequency: 980, duration: 0.09, type: "sine", gain: 0.035, when: 0.012 });
+      noiseBurst({ duration: 0.022, gain: 0.24, frequency: 7200, type: "highpass", attack: 0.0006 });
+      noiseBurst({ duration: 0.2, gain: 0.2, frequency: 3200, type: "highpass" });
+      oscillator({ frequency: 1820, endFrequency: 360, duration: 0.16, type: "sawtooth", gain: 0.09 });
+      oscillator({ frequency: 2600, endFrequency: 900, duration: 0.1, type: "sine", gain: 0.05, when: 0.01 });
+      oscillator({ frequency: 250, endFrequency: 88, duration: 0.21, type: "triangle", gain: 0.11, when: 0.012 });
     } else if (kind === "normalImpact" || kind === "hit") {
-      noiseBurst({ duration: 0.13, gain: 0.15, frequency: 1050, type: "bandpass" });
-      oscillator({ frequency: 245, endFrequency: 92, duration: 0.17, type: "triangle", gain: 0.12 });
-      oscillator({ frequency: 620, endFrequency: 330, duration: 0.08, type: "sine", gain: 0.055, when: 0.008 });
+      noiseBurst({ duration: 0.028, gain: 0.3, frequency: 5200, type: "highpass", attack: 0.0006 });
+      noiseBurst({ duration: 0.17, gain: 0.22, frequency: 950, type: "bandpass", q: 0.7 });
+      oscillator({ frequency: 330, endFrequency: 70, duration: 0.23, type: "triangle", gain: 0.21 });
+      oscillator({ frequency: 128, endFrequency: 42, duration: 0.32, type: "sine", gain: 0.18 });
+      oscillator({ frequency: 800, endFrequency: 300, duration: 0.09, type: "square", gain: 0.055, when: 0.006 });
     } else if (kind === "staffSwing") {
       noiseBurst({ duration: 0.11, gain: 0.095, frequency: 2100, type: "highpass" });
       oscillator({ frequency: 520, endFrequency: 250, duration: 0.1, type: "triangle", gain: 0.045 });
     } else if (kind === "staffImpact") {
-      noiseBurst({ duration: 0.115, gain: 0.14, frequency: 720, type: "bandpass", q: 0.55 });
-      oscillator({ frequency: 310, endFrequency: 105, duration: 0.16, type: "triangle", gain: 0.13 });
-      oscillator({ frequency: 880, endFrequency: 540, duration: 0.055, type: "sine", gain: 0.04, when: 0.006 });
+      noiseBurst({ duration: 0.025, gain: 0.2, frequency: 4200, type: "highpass", attack: 0.0006 });
+      noiseBurst({ duration: 0.14, gain: 0.19, frequency: 700, type: "bandpass", q: 0.55 });
+      oscillator({ frequency: 300, endFrequency: 88, duration: 0.2, type: "triangle", gain: 0.19 });
+      oscillator({ frequency: 120, endFrequency: 46, duration: 0.26, type: "sine", gain: 0.13 });
+      oscillator({ frequency: 880, endFrequency: 520, duration: 0.06, type: "sine", gain: 0.05, when: 0.006 });
     } else if (kind === "dash" || kind === "returnDash") {
       noiseBurst({ duration: 0.2, gain: 0.09, frequency: 2600, type: "highpass" });
       oscillator({ frequency: 720, endFrequency: 1280, duration: 0.13, type: "triangle", gain: 0.035 });
@@ -622,7 +639,25 @@ export function createGameAudio({ getState, enabled = true } = {}) {
       oscillator({ frequency: 92, endFrequency: 46, duration: 0.32, type: "sine", gain: 0.14 });
       oscillator({ frequency: midi(57), endFrequency: midi(69), duration: 0.48, type: "triangle", gain: 0.07, when: 0.05 });
     } else if (kind === "win") {
-      [62, 65, 69, 74].forEach((note, i) => oscillator({ frequency: midi(note), duration: 0.28, type: "triangle", gain: 0.065, when: i * 0.1 }));
+      // 駆け上がり → 長三和音で着地、ティンパニ風の連打つき
+      [72, 76, 79, 84].forEach((note, i) => {
+        const t = i * 0.105;
+        oscillator({ frequency: midi(note), duration: 0.14, type: "sawtooth", gain: 0.075, attack: 0.008, when: t });
+        oscillator({ frequency: midi(note), duration: 0.13, type: "square", gain: 0.03, when: t, detune: 7 });
+        oscillator({ frequency: midi(note - 12), duration: 0.13, type: "triangle", gain: 0.05, when: t });
+      });
+      const land = 0.46;
+      [72, 76, 79, 84, 88].forEach((note, i) => {
+        oscillator({ frequency: midi(note), endFrequency: midi(note - 0.15), duration: 1.6, type: "sawtooth", gain: 0.052 - i * 0.006, attack: 0.02, when: land, detune: i * 5 - 10 });
+        bell(note + 12, { duration: 1.4, gain: 0.015, when: land });
+      });
+      oscillator({ frequency: midi(36), endFrequency: midi(35.6), duration: 1.7, type: "sine", gain: 0.13, when: land });
+      oscillator({ frequency: midi(48), duration: 1.5, type: "triangle", gain: 0.055, when: land });
+      [0, 0.08, 0.16].forEach((t, i) => {
+        oscillator({ frequency: 112 - i * 9, endFrequency: 54, duration: 0.24, type: "sine", gain: 0.12, when: land + t });
+        noiseBurst({ duration: 0.1, gain: 0.035, frequency: 430, type: "lowpass", when: land + t });
+      });
+      noiseBurst({ duration: 1.0, gain: 0.028, frequency: 7000, type: "highpass", when: land, curve: 0.9 });
     } else if (kind === "level") {
       // レベルアップ: 駆け上がってから和音で着地
       [67, 71, 74, 79, 83, 86].forEach((note, i) => {
