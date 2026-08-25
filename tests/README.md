@@ -61,6 +61,20 @@ node tests/ast-compare.mjs
 for f in travel unlock skills chapter5; do node tests/$f-regression.mjs; done
 ```
 
+## 4. 効果音の実測 — `audio-measure.mjs`
+
+`OfflineAudioContext` に差し替えて効果音をレンダリングし、ピーク・立ち上がり・
+減衰(-20dB まで)・帯域比・10ms 窓の RMS 包絡を出す。耳で確かめられない環境で
+「軽い/重い」を数字にするための道具。
+
+```
+node tests/audio-measure.mjs slash hit critical
+WAV_DIR=/tmp node tests/audio-measure.mjs slash   # 波形も書き出す
+```
+
+BGM は 0 に絞って効果音だけを測る。素材31点の読み込みを待ってから鳴らすので、
+実録素材込みの音が測れる。
+
 ### 戦闘を絡めたテストを書くときの注意
 
 - **行動順には ±15% の揺らぎがある**（`buildTurnOrder`）。狙った側に手番を

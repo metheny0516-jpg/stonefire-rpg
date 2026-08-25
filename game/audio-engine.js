@@ -1929,21 +1929,53 @@ export function createGameAudio({ getState, enabled = true } = {}) {
     }
 
     if (kind === 'blade' || kind === 'slash') {
-      // 振り抜く風切り
+      // 斬撃は「風切り → グサッ → ズシッ」の三段で組む。
+      // 刃鳴りだけだと硬く軽い音になる。切っ先が入る中域(グサッ)と、
+      // 遅れて沈む低域(ズシッ)を足すと、当たった質量が出る。
+      const cut = 0.05; // 刃が入る瞬間
+      const punchOut = punchBus || sfxBus;
+      // 1) 風切り: 当たる直前で消えるほど、当たりの一撃が立つ
       noiseBurst({
-        duration: 0.12,
-        gain: 0.17,
-        frequency: 9000,
-        frequencyEnd: 1900,
+        duration: 0.055,
+        gain: 0.19,
+        frequency: 11000,
+        frequencyEnd: 2600,
         type: 'highpass',
-        attack: 0.004,
+        attack: 0.006,
         when: 0,
-        pan: -0.25,
+        pan: -0.3,
+        curve: 1.4,
       });
-      // 刃が当たる瞬間: 実録の刃鳴りを主役に
+      // 2) グサッ: 切っ先が入る中域。ここが従来ごっそり抜けていて、
+      //    低域と高域だけの「カンッ」に聞こえていた
+      noiseBurst({
+        duration: 0.045,
+        gain: 0.4,
+        frequency: 2400,
+        frequencyEnd: 620,
+        type: 'bandpass',
+        q: 1.2,
+        attack: 0.0006,
+        when: cut,
+        bus: punchOut,
+        curve: 2.8,
+      });
+      noiseBurst({
+        duration: 0.1,
+        gain: 0.26,
+        frequency: 820,
+        frequencyEnd: 280,
+        type: 'bandpass',
+        q: 0.85,
+        attack: 0.001,
+        when: cut + 0.007,
+        bus: punchOut,
+        curve: 2.0,
+      });
+      // 3) 刃鳴り: 実録素材。質感と立ち上がりを担当する
       sampledHit({
         keys: ['swordClash', 'slice', 'metal'],
-        when: 0.05,
+        when: cut,
         power: 1.0,
         fade: 0.3,
         rate: 1.05 + Math.random() * 0.12,
@@ -1954,7 +1986,7 @@ export function createGameAudio({ getState, enabled = true } = {}) {
         subGain: 0.26,
         fallback: () =>
           impact({
-            when: 0.05,
+            when: cut,
             power: 1.05,
             tone: 1.6,
             body: 320,
@@ -1963,6 +1995,30 @@ export function createGameAudio({ getState, enabled = true } = {}) {
             noiseLen: 0.11,
             weight: 0.62,
           }),
+      });
+      // 4) ズシッ: 少し遅らせて沈む胴。斬った先の質量はここで出る。
+      //    刃と同時に鳴らすと団子になるので 12ms 遅らせている
+      noiseBurst({
+        duration: 0.15,
+        gain: 0.34,
+        frequency: 200,
+        frequencyEnd: 70,
+        type: 'lowpass',
+        q: 0.7,
+        attack: 0.001,
+        when: cut + 0.012,
+        bus: punchOut,
+        curve: 1.9,
+      });
+      oscillator({
+        frequency: 96,
+        endFrequency: 46,
+        duration: 0.19,
+        type: 'sine',
+        gain: 0.5,
+        attack: 0.001,
+        when: cut + 0.012,
+        bus: punchOut,
       });
     } else if (kind === 'normalImpact' || kind === 'hit') {
       sampledHit({

@@ -99,6 +99,26 @@ main.js から何かを呼ぶ必要はない。**
 `starImpact` `starBurst` `moonBurst` `critical` `bossDefeat` `bossAppear` `spark`
 `chapterStart` は再生時に BGM を自動でダッキングする。
 
+### 斬撃 (`slash`) の作り
+
+ルカの剣は「風切り → グサッ → ズシッ」の三段で組む。実録の刃鳴りだけを
+鳴らすと、低域と高域しか無い「カンッ」になって当たった質量が出ない。
+
+| 層 | 中身 | 役割 |
+| --- | --- | --- |
+| 風切り | 11k→2.6k のハイパスノイズ 55ms | 振り抜き。当たる直前で消し切る |
+| グサッ | 2.4k→620 と 820→280 の帯域ノイズ | 切っ先が入る中域。ここが要 |
+| 刃鳴り | 実録素材 (`swordClash` / `slice` / `metal`) | 質感と立ち上がり |
+| ズシッ | 200→70 のローパスノイズ + 96→46Hz のサイン | 遅らせて沈む胴。質量 |
+
+**ズシッは刃鳴りから 12ms 遅らせる。** 同時に鳴らすと団子になって、
+かえって軽く聞こえる。
+
+タイミングも音のうち。main.js 側は**刃が当たる 50ms 前**に `sfx('slash')` を
+呼ぶ (`heroAttackAnimation` の `p >= 0.41`)。`slash` は内部で 50ms ためてから
+当たりの層を鳴らすので、これで画面の接触と音が揃う。振り始めで呼ぶと、
+音が当たる瞬間より 1/10 秒早く終わって手応えが消える。
+
 ## 触るときの注意
 
 ### 1. 旋律配列の添字は必ず整数にする
@@ -125,6 +145,18 @@ main.js から何かを呼ぶ必要はない。**
 `audio-engine.js?v=` の両方を上げる。上げ忘れると GitHub Pages で古い音が残る。
 
 ## 動作確認のしかた
+
+打撃系は `tests/audio-measure.mjs` で数値にできる。`OfflineAudioContext` に
+差し替えて実時間より速くレンダリングし、ピーク・立ち上がり・減衰・帯域比を
+出す (`WAV_DIR=... ` を付けると波形も書き出せる)。
+
+```
+python3 -m http.server 8798 --bind 127.0.0.1 --directory .
+node tests/audio-measure.mjs slash hit critical
+```
+
+耳で確かめられない環境では、これで「軽い/重い」を言葉でなく数字で比べる。
+
 
 耳で確かめられない環境では、Playwright + Chromium で以下を確認するとよい
 (`/opt/pw-browsers/chromium-1194/chrome-linux/chrome`、`--autoplay-policy=no-user-gesture-required`)。

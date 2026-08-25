@@ -35,7 +35,7 @@ import {
   writeActiveSlot,
   writeSlot,
 } from './save-store.js';
-import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
+import { createGameAudio } from './audio-engine.js?v=54-slash';
 (() => {
   'use strict';
   const C = document.querySelector('#game'),
@@ -2468,7 +2468,9 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
             state.heroStretch = 1.14;
             state.heroAfterimage = 1;
             state.attackFx = q;
-            if (!slashSound) {
+            // 斬撃音は刃が当たる 50ms 前に出す。振り始めで鳴らすと、
+            // 音が当たる瞬間より 1/10 秒早く終わって手応えが消える
+            if (!slashSound && p >= 0.41) {
               slashSound = true;
               sfx('slash');
             }
@@ -2482,6 +2484,17 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
             state.attackFx = 1;
             state.battleFlash = (1 - q) * 0.55;
             if (kind === 'miss') state.enemyShift = 18 * Math.sin(q * Math.PI);
+            // コマ落ちで振り抜きのフレームを跨いだときの取りこぼしを拾う
+            if (!slashSound) {
+              slashSound = true;
+              sfx('slash');
+            }
+            // 当たった瞬間に画面を揺らす。通常攻撃にだけ揺れが無く、
+            // 連携ワザや会心と比べて手応えが薄かった
+            if (!impactSound && kind !== 'miss') {
+              impactSound = true;
+              cameraShake(BATTLE_EFFECTS.normal.shake * 1.8, 110);
+            }
           } else {
             let q = (p - 0.63) / 0.37;
             state.battlePose = q < 0.78 ? 5 : 0;
