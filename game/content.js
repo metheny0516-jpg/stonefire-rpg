@@ -221,3 +221,11 @@ export const ITEM_RECIPES = Object.freeze([
   // 蒼天晶+風紋の糸 (売値74G) → 星雫の霊薬×1 (店では買えない)
   Object.freeze({ id: "starTonic", amount: 1, needs: Object.freeze({ skyCrystal: 1, windSilk: 1 }) }),
 ]);
+
+// 章のメタ情報。旅立ち先の一覧と、各章の開始地点に使う。
+export const CHAPTERS = Object.freeze({
+  1: Object.freeze({ name: "石牢", full: "石牢の灯火", where: "灯火の里のふもと", start: Object.freeze({ x: 1, y: 10 }) }),
+  2: Object.freeze({ name: "月影の森", full: "石牢の灯火・月影篇", where: "銀鈴の宿場のはずれ", start: Object.freeze({ x: 1, y: 10 }) }),
+  3: Object.freeze({ name: "星骸の塔", full: "石牢の灯火・星骸篇", where: "雲海に浮かぶ回廊", start: Object.freeze({ x: 1, y: 10 }) }),
+});
+export const MAX_CHAPTER = 3;
