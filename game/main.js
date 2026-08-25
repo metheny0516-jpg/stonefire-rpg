@@ -39,7 +39,7 @@ import {
   writeActiveSlot,
   writeSlot,
 } from './save-store.js';
-import { createGameAudio } from './audio-engine.js?v=50-real-samples';
+import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
 (() => {
   'use strict';
   const C = document.querySelector('#game'),
@@ -812,6 +812,32 @@ import { createGameAudio } from './audio-engine.js?v=50-real-samples';
     let recorded = Number(state.storyFlags.maxChapter) || 0;
     return Math.max(1, Math.min(MAX_CHAPTER, recorded));
   }
+  // ボスの討伐品は、その章を攻略した動かぬ証拠になる。
+  const BOSS_TROPHY = Object.freeze({ flameHorn: 1, eclipseWing: 2, astralCore: 3, duskBell: 4 });
+
+  // 手元の証拠を全部集めて、到達済みの章を組み立て直す。
+  // 現在の章だけを基準にすると、前の章へ戻って保存したセーブで先の章の
+  // 記録が失われ、二度と開かなくなる。
+  function inferProgress() {
+    if (!state.storyFlags || typeof state.storyFlags !== 'object') state.storyFlags = {};
+    let cleared = clearedChapters();
+    // 討伐品を持っていれば、その章は攻略済み
+    Object.keys(BOSS_TROPHY).forEach(id => {
+      if (itemCount(id) > 0) cleared[BOSS_TROPHY[id]] = true;
+    });
+    // クリア画面を出している最中の章も攻略済み
+    if (state.cleared && CHAPTERS[state.chapter]) cleared[state.chapter] = true;
+    let deepest = Math.max(1, Number(state.storyFlags.maxChapter) || 0, Number(state.chapter) || 1);
+    for (let c = 1; c <= MAX_CHAPTER; c++) {
+      if (!cleared[c]) continue;
+      // 第N章を攻略済みなら、それより前の章も当然攻略済み
+      for (let i = 1; i < c; i++) cleared[i] = true;
+      // そして次の章までは到達できている
+      deepest = Math.max(deepest, Math.min(MAX_CHAPTER, c + 1));
+    }
+    state.storyFlags.maxChapter = Math.min(MAX_CHAPTER, deepest);
+  }
+
   // 章に到達したことを記録する。第N章にいるということは第N-1章までは
   // 攻略済みなので、記録が無い古いセーブのぶんもここで補完する。
   function noteChapterReached(chapter) {
@@ -822,6 +848,7 @@ import { createGameAudio } from './audio-engine.js?v=50-real-samples';
     if (c > now) state.storyFlags.maxChapter = c;
     let cleared = clearedChapters();
     for (let i = 1; i < c; i++) if (!cleared[i]) cleared[i] = true;
+    inferProgress();
   }
   function chapterUnlocked(c) {
     return c === 1 || c <= maxChapterReached();
