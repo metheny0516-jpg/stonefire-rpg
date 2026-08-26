@@ -52,6 +52,7 @@ const snap = async (label) => {
       mode: st.mode, chapter: st.chapter, floor: st.floor, x: st.x, y: st.y, dir: st.dir, steps: st.steps,
       gold: st.gold, busy: st.busy,
       hero: m(st.hero), mina: st.companion && st.companion.active ? m(st.companion) : null,
+      teo: st.alchemist && st.alchemist.active ? m(st.alchemist) : null,
       inv: JSON.stringify(st.inventory), gear: JSON.stringify(st.gear),
       flags: JSON.stringify(st.storyFlags),
       enemies: (st.enemies || []).map(e => e.name + ':' + e.hp + '/' + e.maxHp).join(','),

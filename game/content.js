@@ -161,7 +161,7 @@ export const TOWNS = Object.freeze({
 // パーティの一覧。並び順・表示名・成長のしかたを、ここ一箇所にまとめる。
 // 二人ぶんの分岐を呼び出し側に散らすと、仲間を増やしたときに同じ枝が
 // もう一式ずつ増えていくため、鍵(hero/mage)から引く表にしている。
-export const MEMBER_ORDER = Object.freeze(['hero', 'mage']);
+export const MEMBER_ORDER = Object.freeze(['hero', 'mage', 'alch']);
 export const MEMBER_INFO = Object.freeze({
   hero: Object.freeze({
     name: 'ルカ',
@@ -170,9 +170,10 @@ export const MEMBER_INFO = Object.freeze({
     levelDelay: 950,
     baseSpd: 10,
     growth: Object.freeze({ maxHp: 8, atk: 3, def: 2, spdEvery: 2 }),
-    // 戦闘中の立ち位置。人数で詰め方が変わる
-    anchorX: Object.freeze({ 1: 69, 2: 49 }),
-    floatX: 53,
+    // 戦闘中の立ち位置と背丈。人数が増えるほど左へ詰めて、小さく描く
+    anchorX: Object.freeze({ 1: 69, 2: 49, 3: 36 }),
+    height: Object.freeze({ 1: 166, 2: 145, 3: 120 }),
+    floatX: Object.freeze({ 1: 53, 2: 53, 3: 40 }),
     hitFlag: 'heroHit',
   }),
   mage: Object.freeze({
@@ -181,9 +182,27 @@ export const MEMBER_INFO = Object.freeze({
     levelDelay: 1000,
     baseSpd: 9,
     growth: Object.freeze({ maxHp: 6, atk: 3, def: 1, spdEvery: 2 }),
-    anchorX: Object.freeze({ 2: 111 }),
-    floatX: 112,
+    base: Object.freeze({ hp: 26, atk: 7, def: 2, spd: 9, next: 20 }),
+    firstSkill: 'moonheal',
+    anchorX: Object.freeze({ 2: 111, 3: 92 }),
+    height: Object.freeze({ 2: 132, 3: 112 }),
+    floatX: Object.freeze({ 2: 112, 3: 96 }),
     hitFlag: 'mageHit',
+  }),
+  // 錬成士テオ。能力はどれもパーティ最低で、伸びも遅い。
+  // 三人目が立っているぶん被弾が散ることと、ワザの小回りで元を取る役。
+  alch: Object.freeze({
+    name: 'テオ',
+    levelNote: '調合の腕が上がり',
+    levelDelay: 1000,
+    baseSpd: 6,
+    growth: Object.freeze({ maxHp: 5, atk: 2, def: 1, spdEvery: 3 }),
+    base: Object.freeze({ hp: 24, atk: 5, def: 2, spd: 6, next: 20 }),
+    firstSkill: 'emberflask',
+    anchorX: Object.freeze({ 3: 146 }),
+    height: Object.freeze({ 3: 108 }),
+    floatX: Object.freeze({ 3: 150 }),
+    hitFlag: 'alchHit',
   }),
 });
 
@@ -341,6 +360,54 @@ export const EQUIPMENT = Object.freeze({
     desc: '地の底の脈動をそのまま撃ち出す',
     tint: '#ff7ab4',
   }),
+  // 錬成士の触媒器。攻撃は剣・杖より一段低いかわりに、守りが少しだけ付く。
+  brassCenser: Object.freeze({
+    name: '真鍮の香炉',
+    slot: 'weapon',
+    owner: 'alch',
+    atk: 2,
+    def: 1,
+    price: 60,
+    chapter: 3,
+    icon: '\u2697',
+    desc: '継ぎ接ぎだらけの、使い込まれた香炉',
+  }),
+  emberCenser: Object.freeze({
+    name: '焔紋の香炉',
+    slot: 'weapon',
+    owner: 'alch',
+    atk: 7,
+    def: 2,
+    price: 420,
+    chapter: 3,
+    icon: '\u2697',
+    desc: '燻らせた薬が、炎の紋を描く',
+    tint: '#ffab5c',
+  }),
+  duskCenser: Object.freeze({
+    name: '黄昏の香炉',
+    slot: 'weapon',
+    owner: 'alch',
+    atk: 13,
+    def: 3,
+    price: 1650,
+    chapter: 4,
+    icon: '\u2697',
+    desc: '鐘の欠片を灰に混ぜて焚く',
+    tint: '#c79bff',
+  }),
+  abyssCenser: Object.freeze({
+    name: '深淵の香炉',
+    slot: 'weapon',
+    owner: 'alch',
+    atk: 20,
+    def: 4,
+    price: 3900,
+    chapter: 5,
+    icon: '\u2697',
+    desc: '底の見えない闇を、少しずつ煮詰めてある',
+    tint: '#ff7fb4',
+  }),
   clothArmor: Object.freeze({
     name: '旅装',
     slot: 'armor',
@@ -422,6 +489,7 @@ export const EQUIPMENT = Object.freeze({
 export const STARTING_GEAR = Object.freeze({
   hero: Object.freeze({ weapon: 'rustSword', armor: 'clothArmor' }),
   mage: Object.freeze({ weapon: 'oakStaff', armor: 'clothArmor' }),
+  alch: Object.freeze({ weapon: 'brassCenser', armor: 'clothArmor' }),
 });
 
 export const ENEMIES = Object.freeze({
@@ -943,6 +1011,72 @@ export const SKILLS = Object.freeze([
     motion: 'moonveil',
     desc: '仲間全員が次の2回の攻撃を弾く',
     spark: ['guard'],
+  }),
+  // テオ: 素の攻撃力が低いぶん、全体・補助・立て直しで働く
+  Object.freeze({
+    id: 'emberflask',
+    owner: 'alch',
+    name: '焔の投薬',
+    lv: 1,
+    uses: 3,
+    power: 1.05,
+    target: 'all',
+    kind: 'fire',
+    motion: 'flask',
+    desc: '敵全体 威力1.05倍',
+    spark: ['attack'],
+  }),
+  Object.freeze({
+    id: 'tonicmist',
+    owner: 'alch',
+    name: '癒しの霧',
+    lv: 2,
+    uses: 2,
+    healAll: 14,
+    rate: 0.16,
+    kind: 'heal',
+    motion: 'mist',
+    desc: '仲間全員を回復（最大HPの16%）',
+    spark: ['guard', 'wait'],
+  }),
+  Object.freeze({
+    id: 'catalyst',
+    owner: 'alch',
+    name: '触媒の火',
+    lv: 3,
+    uses: 2,
+    empower: true,
+    kind: 'fire',
+    motion: 'mist',
+    desc: '仲間1人の次の攻撃を1.5倍に',
+    spark: ['wait', 'guard'],
+  }),
+  Object.freeze({
+    id: 'bindtar',
+    owner: 'alch',
+    name: '膠の罠',
+    lv: 4,
+    uses: 2,
+    power: 0.7,
+    stun: 1,
+    kind: 'fire',
+    motion: 'flask',
+    desc: '威力0.7倍 敵を1回行動不能に',
+    spark: ['attack', 'guard'],
+  }),
+  Object.freeze({
+    id: 'revivedraft',
+    owner: 'alch',
+    name: '目覚めの霊薬',
+    lv: 6,
+    uses: 1,
+    heal: 30,
+    rate: 0.5,
+    revive: true,
+    kind: 'heal',
+    motion: 'mist',
+    desc: '仲間1人を最大HPの50%回復 戦闘不能も治す',
+    spark: ['heal'],
   }),
 ]);
 

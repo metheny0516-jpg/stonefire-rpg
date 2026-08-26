@@ -136,6 +136,14 @@ export function slotSummary(slot, storage = defaultStorage()) {
             maxHp: Number(data.companion?.maxHp) || 0,
           }
         : null,
+    alchemist:
+      data.alchemist?.active || data.chapter >= 3
+        ? {
+            lv: Number(data.alchemist?.lv) || 1,
+            hp: Number(data.alchemist?.hp) || 0,
+            maxHp: Number(data.alchemist?.maxHp) || 0,
+          }
+        : null,
   };
 }
 

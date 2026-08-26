@@ -56,16 +56,23 @@ node tests/ast-compare.mjs
 | `unlock-regression.mjs` | 討伐の証を売っても解錠状態が失われないこと |
 | `skills-regression.mjs` | スタン／吸収／ディフレクト／蘇生／フィールド回復 |
 | `chapter5-regression.mjs` | 第5章の2階層・宝箱・落とし穴・光苔・階段・ボス |
+| `alchemist-regression.mjs` | 錬成士テオの加入・隊列・行動順・ワザ5種 |
 
 ```
-for f in travel unlock skills chapter5; do node tests/$f-regression.mjs; done
+for f in travel unlock skills chapter5 alchemist; do node tests/$f-regression.mjs; done
 ```
+
+`save-chapter-regression.mjs` だけはブラウザを使わないので、
+サーバーを起動していなくても `node tests/save-chapter-regression.mjs` で走る。
 
 ### 戦闘を絡めたテストを書くときの注意
 
 - **行動順には ±15% の揺らぎがある**（`buildTurnOrder`）。狙った側に手番を
   回したいときは、素早さを大きく離してから `startBattle` を呼ぶこと。
   「速いはずだから先手」では落ちる
+- **敵が複数いるとき、単体ワザは対象選択メニューが挟まる。** そのまま
+  `useSkill(id)` を呼んでも効果は出ない。`alchemist-regression.mjs` のように
+  相手を第2引数で直接渡すこと
 - **スタンや「動けない！」は一瞬で消える。** 演出が終わってから状態を
   見に行っても遅い。`skills-regression.mjs` の `watch()` のように、
   演出中を細かく覗いて記録する

@@ -139,10 +139,10 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
   // 「鍵 → メンバー」の対応をここだけに持たせ、名前・立ち位置・成長は
   // すべて MEMBER_INFO から引く。呼び出し側に hero/mage の分岐を作らない。
   function memberByKey(key) {
-    return key === 'mage' ? state?.companion : state?.hero;
+    return key === 'mage' ? state?.companion : key === 'alch' ? state?.alchemist : state?.hero;
   }
   function memberKey(member) {
-    return member === state?.companion ? 'mage' : 'hero';
+    return member === state?.companion ? 'mage' : member === state?.alchemist ? 'alch' : 'hero';
   }
   function memberInfo(member) {
     return MEMBER_INFO[memberKey(member)];
@@ -160,42 +160,82 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
   function memberName(member) {
     return memberInfo(member).name;
   }
+  // 隊列。ミナはルカの1歩うしろ、テオはさらにもう1歩うしろを歩く。
+  function placeParty(x, y) {
+    state.fx = x;
+    state.fy = y;
+    state.gx = x;
+    state.gy = y;
+  }
+  function advanceParty(ox, oy) {
+    state.gx = state.fx;
+    state.gy = state.fy;
+    state.fx = ox;
+    state.fy = oy;
+  }
+  // 人数ごとの値を引く。その人数の指定が無ければ、いちばん多い人数のものを使う。
+  function bySize(table) {
+    return table[partyMembers().length] ?? table[Object.keys(table).pop()];
+  }
   // 立ち絵の足元。人数が増えるほど左へ詰める。
   function memberAnchorX(member) {
-    let anchors = memberInfo(member).anchorX;
-    return anchors[partyMembers().length] ?? anchors[Object.keys(anchors).pop()];
+    return bySize(memberInfo(member).anchorX);
+  }
+  // 立ち絵の背丈。三人並ぶと、収まるように小さくなる。
+  function memberHeight(member) {
+    return bySize(memberInfo(member).height);
   }
   // ダメージ数字を出す位置。立ち絵の足元とは少しずれる。
   function memberFloatX(member) {
-    return memberInfo(member).floatX;
+    return bySize(memberInfo(member).floatX);
   }
   function setMemberHit(member, on) {
     state[memberInfo(member).hitFlag] = on;
   }
-  function mageForLevel(lv = 1) {
-    let m = {
-      active: false,
-      lv: 1,
-      hp: 26,
-      maxHp: 26,
-      atk: 7,
-      def: 2,
-      spd: 9,
-      exp: 0,
-      next: 20,
-      learnedSkills: ['moonheal'],
-      equip: { ...STARTING_GEAR.mage },
-    };
+  // あとから加わる仲間を、指定のレベルまで育てた状態で作る。
+  function memberForLevel(key, lv = 1) {
+    let info = MEMBER_INFO[key],
+      b = info.base,
+      g = info.growth,
+      m = {
+        active: false,
+        lv: 1,
+        hp: b.hp,
+        maxHp: b.hp,
+        atk: b.atk,
+        def: b.def,
+        spd: b.spd,
+        exp: 0,
+        next: b.next,
+        learnedSkills: [info.firstSkill],
+        equip: { ...STARTING_GEAR[key] },
+      };
     while (m.lv < Math.max(1, lv)) {
       m.lv++;
       m.next = Math.floor(m.next * 1.55);
-      m.maxHp += 6;
-      m.atk += 3;
-      m.def += 1;
-      if (m.lv % 2 === 0) m.spd = (m.spd || 9) + 1;
+      m.maxHp += g.maxHp;
+      m.atk += g.atk;
+      m.def += g.def;
+      if (m.lv % g.spdEvery === 0) m.spd = (m.spd || info.baseSpd) + 1;
     }
     m.hp = m.maxHp;
     return m;
+  }
+  function mageForLevel(lv = 1) {
+    return memberForLevel('mage', lv);
+  }
+  // 読み込み時、貯まった経験値のぶんだけレベルを追いつかせる。
+  function catchUpLevels(member, key) {
+    let g = MEMBER_INFO[key].growth;
+    while (member.lv < 99 && member.exp >= member.next) {
+      member.exp -= member.next;
+      member.lv++;
+      member.next = Math.floor(member.next * 1.55);
+      member.maxHp += g.maxHp;
+      member.atk += g.atk;
+      member.def += g.def;
+      member.hp = member.maxHp;
+    }
   }
   function normalizeMember(raw, base) {
     let m = { ...base, ...raw },
@@ -213,7 +253,8 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
     let learned = Array.isArray(member.learnedSkills)
       ? member.learnedSkills.filter(id => SKILLS.some(s => s.id === id && s.owner === owner))
       : [];
-    if (owner === 'mage' && !learned.includes('moonheal')) learned.push('moonheal');
+    let first = MEMBER_INFO[owner]?.firstSkill;
+    if (first && !learned.includes(first)) learned.push(first);
     member.learnedSkills = learned;
     member.guarding = false;
     member.charged = false;
@@ -271,8 +312,10 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
         },
         'hero',
       ),
-      companion = prepareSkills(mageForLevel(1), 'mage');
+      companion = prepareSkills(mageForLevel(1), 'mage'),
+      alchemist = prepareSkills(memberForLevel('alch', 1), 'alch');
     companion.equip = { ...STARTING_GEAR.mage };
+    alchemist.equip = { ...STARTING_GEAR.alch };
     return {
       chapter: 1,
       floor: 1,
@@ -283,11 +326,14 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
       y: 10,
       fx: 1,
       fy: 10,
+      gx: 1,
+      gy: 10,
       dir: 'down',
       walk: 0,
       steps: 0,
       hero,
       companion,
+      alchemist,
       inventory: normalizeInventory({ potion: 3 }),
       enemy: null,
       enemies: [],
@@ -416,10 +462,13 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
       y: state.y,
       fx: state.fx,
       fy: state.fy,
+      gx: state.gx,
+      gy: state.gy,
       dir: state.dir,
       steps: state.steps,
       hero: state.hero,
       companion: state.companion,
+      alchemist: state.alchemist,
       inventory: state.inventory,
       bossAlive: state.bossAlive,
       storyFlags: state.storyFlags,
@@ -465,29 +514,16 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
       chapter = CHAPTERS[Number(d.chapter)] ? Number(d.chapter) : 1,
       h = normalizeMember(d.hero, b.hero);
     h.potions = Math.max(0, Number(d.hero?.potions) || 0);
-    while (h.lv < 99 && h.exp >= h.next) {
-      h.exp -= h.next;
-      h.lv++;
-      h.next = Math.floor(h.next * 1.55);
-      h.maxHp += 8;
-      h.atk += 3;
-      h.def += 2;
-      h.hp = h.maxHp;
-    }
+    catchUpLevels(h, 'hero');
     prepareSkills(h, 'hero');
-    let generated = mageForLevel(Math.max(1, h.lv)),
-      m = normalizeMember(d.companion, generated);
+    let m = normalizeMember(d.companion, mageForLevel(Math.max(1, h.lv)));
     m.active = chapter >= 2 || !!d.companion?.active;
-    while (m.lv < 99 && m.exp >= m.next) {
-      m.exp -= m.next;
-      m.lv++;
-      m.next = Math.floor(m.next * 1.55);
-      m.maxHp += 6;
-      m.atk += 3;
-      m.def += 1;
-      m.hp = m.maxHp;
-    }
+    catchUpLevels(m, 'mage');
     prepareSkills(m, 'mage');
+    let a = normalizeMember(d.alchemist, memberForLevel('alch', Math.max(1, h.lv)));
+    a.active = chapter >= 3 || !!d.alchemist?.active;
+    catchUpLevels(a, 'alch');
+    prepareSkills(a, 'alch');
     let x = Number.isInteger(d.x) ? d.x : 1,
       y = Number.isInteger(d.y) ? d.y : 10,
       inventory = normalizeInventory(d.inventory, h.potions);
@@ -495,6 +531,7 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
     let gearBag = normalizeGear(d.gear);
     normalizeEquip(h, 'hero', gearBag);
     normalizeEquip(m, 'mage', gearBag);
+    normalizeEquip(a, 'alch', gearBag);
     state = {
       ...b,
       chapter,
@@ -505,11 +542,14 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
       y,
       fx: Number.isInteger(d.fx) ? d.fx : x,
       fy: Number.isInteger(d.fy) ? d.fy : y,
+      gx: Number.isInteger(d.gx) ? d.gx : Number.isInteger(d.fx) ? d.fx : x,
+      gy: Number.isInteger(d.gy) ? d.gy : Number.isInteger(d.fy) ? d.fy : y,
       dir: ['up', 'down', 'left', 'right'].includes(d.dir) ? d.dir : 'down',
       steps: Number(d.steps) || 0,
       floor: Math.min(DUNGEONS[chapter]?.floors || 1, Math.max(1, Number(d.floor) || 1)),
       hero: h,
       companion: m,
+      alchemist: a,
       inventory,
       bossAlive: d.bossAlive !== false,
       storyFlags: d.storyFlags || {},
@@ -613,6 +653,9 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
       (s.companion
         ? '<br>ミナ LV ' + s.companion.lv + '　HP ' + s.companion.hp + ' / ' + s.companion.maxHp
         : '') +
+      (s.alchemist
+        ? '<br>テオ LV ' + s.alchemist.lv + '　HP ' + s.alchemist.hp + ' / ' + s.alchemist.maxHp
+        : '') +
       '<small>プレイ ' +
       formatPlay(s.playMs) +
       '　最終セーブ ' +
@@ -700,44 +743,57 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
   function actorName(member = currentActor()) {
     return memberName(member);
   }
+  // ステータス欄のDOM。仲間ごとに1枠。
+  const MEMBER_DOM = Object.freeze({
+    hero: {
+      panel: '#heroStats',
+      lv: '#lv',
+      hp: '#hp',
+      exp: '#exp',
+      fill: '#hpfill',
+      note: m => '<small>会心 ' + criticalRateForLevel(m.lv) + '%' + (m.charged ? '　力UP' : '') + '</small>',
+    },
+    mage: {
+      panel: '#companionStats',
+      lv: '#mlv',
+      hp: '#mhp',
+      exp: '#mexp',
+      fill: '#mhpfill',
+      note: m => (m.charged ? '<small>魔力UP</small>' : ''),
+    },
+    alch: {
+      panel: '#alchStats',
+      lv: '#alv',
+      hp: '#ahp',
+      exp: '#aexp',
+      fill: '#ahpfill',
+      note: m => (m.charged ? '<small>火が移った</small>' : ''),
+    },
+  });
   function sync() {
-    let h = state.hero,
-      m = state.companion,
-      sub = state.skillMenu || state.itemMenu || state.targetMenu,
-      battle = state.mode === 'battle';
+    let sub = state.skillMenu || state.itemMenu || state.targetMenu,
+      battle = state.mode === 'battle',
+      joined = partyMembers().length;
     $('.title').textContent = CHAPTERS[state.chapter]?.full || '石牢の灯火';
-    $('#lv').textContent = 'LV ' + h.lv;
-    $('#hp').innerHTML =
-      'HP<br><b class="' + (h.hp ? '' : 'ko') + '">' + (h.hp ? h.hp + ' / ' + h.maxHp : '戦闘不能') + '</b>';
-    $('#exp').innerHTML =
-      'EXP<br><b>' +
-      h.exp +
-      ' / ' +
-      h.next +
-      '</b>' +
-      (battle
-        ? '<small>会心 ' + criticalRateForLevel(h.lv) + '%' + (h.charged ? '　力UP' : '') + '</small>'
-        : '');
-    $('#hpfill').style.width = (100 * h.hp) / h.maxHp + '%';
-    $('#stats').classList.toggle('party', !!m.active);
-    if (m.active) {
-      $('#mlv').textContent = 'LV ' + m.lv;
-      $('#mhp').innerHTML =
+    $('#stats').classList.toggle('party', joined > 1);
+    $('#stats').classList.toggle('trio', joined > 2);
+    MEMBER_ORDER.forEach(key => {
+      let dom = MEMBER_DOM[key],
+        m = memberByKey(key);
+      if (!dom || !m || !memberJoined(key)) return;
+      $(dom.lv).textContent = 'LV ' + m.lv;
+      $(dom.hp).innerHTML =
         'HP<br><b class="' +
         (m.hp ? '' : 'ko') +
         '">' +
         (m.hp ? m.hp + ' / ' + m.maxHp : '戦闘不能') +
         '</b>';
-      $('#mexp').innerHTML =
-        'EXP<br><b>' + m.exp + ' / ' + m.next + '</b>' + (battle && m.charged ? '<small>魔力UP</small>' : '');
-      $('#mhpfill').style.width = (100 * m.hp) / m.maxHp + '%';
-    }
-    $('#heroStats').classList.toggle('active-turn', battle && state.actor === 'hero' && !state.busy);
-    $('#companionStats').classList.toggle('active-turn', battle && state.actor === 'mage' && !state.busy);
-    $('#heroStats').classList.toggle('guarding', battle && !!h.guarding);
-    $('#companionStats').classList.toggle('guarding', battle && !!m.guarding);
-    $('#heroStats').classList.toggle('charged', battle && !!h.charged);
-    $('#companionStats').classList.toggle('charged', battle && !!m.charged);
+      $(dom.exp).innerHTML = 'EXP<br><b>' + m.exp + ' / ' + m.next + '</b>' + (battle ? dom.note(m) : '');
+      $(dom.fill).style.width = (100 * m.hp) / m.maxHp + '%';
+      $(dom.panel).classList.toggle('active-turn', battle && state.actor === key && !state.busy);
+      $(dom.panel).classList.toggle('guarding', battle && !!m.guarding);
+      $(dom.panel).classList.toggle('charged', battle && !!m.charged);
+    });
     $('#potions').textContent = '×' + itemCount('potion');
     if ($('#gold')) $('#gold').textContent = gold() + 'G';
     $('#dpad').classList.toggle('hide', state.mode !== 'field' && state.mode !== 'town');
@@ -745,6 +801,7 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
     $('#skillMenu').classList.toggle('show', battle && sub);
     if ($('#bagBtn')) $('#bagBtn').disabled = state.mode !== 'field' && state.mode !== 'town';
   }
+
   // 多層ダンジョン（塔・洞）の設定。無い章は null。
   function dungeon(chapter = state?.chapter) {
     return DUNGEONS[chapter] || null;
@@ -782,8 +839,7 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
       spot = findTile(want) || { x: 1, y: 9 };
     state.x = spot.x;
     state.y = spot.y;
-    state.fx = spot.x;
-    state.fy = spot.y;
+    placeParty(spot.x, spot.y);
     state.steps = 0;
     state.walk = 0;
     state.moss = 0;
@@ -849,8 +905,7 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
     state.floor = to;
     state.x = spot.x;
     state.y = spot.y;
-    state.fx = spot.x;
-    state.fy = spot.y;
+    placeParty(spot.x, spot.y);
     state.steps = 0;
     state.walk = 0;
     let hurt = [state.hero, ...(state.companion.active ? [state.companion] : [])].filter(v => v.hp > 0);
@@ -953,8 +1008,7 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
     state.moss = 0;
     state.x = meta.start.x;
     state.y = meta.start.y;
-    state.fx = meta.start.x;
-    state.fy = meta.start.y;
+    placeParty(meta.start.x, meta.start.y);
     state.dir = 'up';
     state.walk = 0;
     state.steps = 0;
@@ -1054,7 +1108,9 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
     if (state.gear[id] <= 0) delete state.gear[id];
   }
   function equippedCount(id) {
-    return [state.hero, state.companion].filter(m => m && (m.equip?.weapon === id || m.equip?.armor === id))
+    // まだ仲間になっていない者の装備も数える。数え落とすと、
+    // 本人が着けているものを店で売れてしまう。
+    return MEMBER_ORDER.map(memberByKey).filter(m => m && (m.equip?.weapon === id || m.equip?.armor === id))
       .length;
   }
   function spareGear(id) {
@@ -1505,8 +1561,7 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
     state.mode = 'town';
     state.x = t.spawn.x;
     state.y = t.spawn.y;
-    state.fx = Math.max(1, t.spawn.x - 1);
-    state.fy = t.spawn.y;
+    placeParty(Math.max(1, t.spawn.x - 1), t.spawn.y);
     state.dir = 'left';
     state.walk = 0;
     state.steps = 0;
@@ -1521,8 +1576,7 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
     state.mode = 'field';
     state.x = 1;
     state.y = 10;
-    state.fx = 1;
-    state.fy = 10;
+    placeParty(1, 10);
     state.dir = 'up';
     state.walk = 0;
     state.steps = 0;
@@ -1582,8 +1636,7 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
     sfx(inTown ? 'step1' : 'step' + state.chapter);
     await animateStep(ox, oy, nx, ny, !!heldDir);
     if (state.companion.active) {
-      state.fx = ox;
-      state.fy = oy;
+      advanceParty(ox, oy);
     }
     state.x = nx;
     state.y = ny;
@@ -1658,8 +1711,7 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
       state.x = ox;
       state.y = oy;
       if (state.companion.active) {
-        state.fx = ox;
-        state.fy = oy;
+        advanceParty(ox, oy);
       }
       saveGame();
       startBattle(BOSSES[state.chapter]);
@@ -1726,12 +1778,21 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
       let started = performance.now(),
         duration = continuous ? 128 : 150,
         fox = state.fx,
-        foy = state.fy;
+        foy = state.fy,
+        gox = state.gx,
+        goy = state.gy;
       function frame(now) {
         let p = Math.min(1, (now - started) / duration),
           ease = continuous ? p : p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2,
           walkFrame = Math.min(3, Math.floor(p * 4));
         drawMap();
+        if (state.alchemist?.active)
+          drawFieldAlch(
+            (gox + (fox - gox) * ease) * T + 10,
+            (goy + (foy - goy) * ease) * T + 10,
+            state.dir,
+            walkFrame,
+          );
         if (state.companion.active)
           drawFieldCompanion(
             (fox + (ox - fox) * ease) * T + 10,
@@ -1765,6 +1826,11 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
     state.mageLunge = 0;
     state.mageLift = 0;
     state.mageStaffStrike = 0;
+    state.alchHit = 0;
+    state.alchLunge = 0;
+    state.alchLift = 0;
+    state.alchCast = 0;
+    state.alchFx = null;
     state.staffFx = null;
     state.attackFx = 0;
     state.criticalFx = null;
@@ -1971,7 +2037,7 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
       member.charged = false;
       member.expBoost = 1;
     }
-    state.actor = state.hero.hp > 0 ? 'hero' : 'mage';
+    state.actor = memberKey(livingMembers()[0] || state.hero);
     state.mode = 'battle';
     resetBattleMotion();
     state.skillFx = null;
@@ -2163,6 +2229,9 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
     return partyMembers().filter(v => (revive ? v.hp < v.maxHp : v.hp > 0 && v.hp < v.maxHp));
   }
   function skillMotion(s) {
+    if (state.actor === 'alch') {
+      return s.motion === 'mist' ? alchMistAnimation(s.name) : alchFlaskAnimation(s.name);
+    }
     if (state.actor === 'hero') {
       if (s.motion === 'starfire') return starfireAnimation(s.name);
       if (s.motion === 'crescent') return comboSlashAnimation(s.name, Math.max(2, s.hits || 2));
@@ -2191,20 +2260,28 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
       closeSubMenu();
       return;
     }
-    if (!s.heal && !s.healAll && s.target !== 'all' && !forcedTarget && livingEnemies().length > 1) {
+    if (
+      !s.heal &&
+      !s.healAll &&
+      !s.empower &&
+      s.target !== 'all' &&
+      !forcedTarget &&
+      livingEnemies().length > 1
+    ) {
       openTargetMenu(s.name, foe => useSkill(id, foe));
       return;
     }
     if (forcedTarget) state.enemy = forcedTarget;
-    if (!s.heal && !s.healAll && (!state.enemy || state.enemy.hp <= 0) && !chooseEnemyTarget()) return;
+    if (!s.heal && !s.healAll && !s.empower && (!state.enemy || state.enemy.hp <= 0) && !chooseEnemyTarget())
+      return;
     state.targetMenu = false;
     let group = s.healAll ? healTargets(!!s.revive) : null,
       target = s.heal ? mostInjuredMember(!!s.revive) : null;
-    if (s.deflect) {
+    if (s.deflect || s.empower) {
       group = null;
       target = null;
     }
-    if (!s.deflect && ((s.heal && !target) || (s.healAll && !group.length))) {
+    if (!s.deflect && !s.empower && ((s.heal && !target) || (s.healAll && !group.length))) {
       setMsg('HPは全員満タンだ。');
       state.skillMenu = false;
       sync();
@@ -2217,7 +2294,19 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
     let charged = !!member.charged;
     member.charged = false;
     member.chargeUsed = charged;
-    if (s.deflect) {
+    if (s.empower) {
+      // 味方1人に「ためる」と同じ高ぶりを移す。自分より攻撃力の高い仲間を選ぶ
+      await skillMotion(s);
+      let boosted =
+        livingMembers()
+          .filter(v => v !== member)
+          .sort((a, b) => atkOf(b) - atkOf(a))[0] || member;
+      boosted.charged = true;
+      sfx('level');
+      setMsg(actorName(boosted) + 'に触媒の火が移った！ 次の攻撃が 1.5倍になる。');
+      sync();
+      draw();
+    } else if (s.deflect) {
       // 構えを取る。次に来る攻撃を指定回数だけ弾く
       await skillMotion(s);
       let who = s.target === 'all' ? livingMembers() : [member];
@@ -2402,6 +2491,17 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
       }
       draw();
       await delay(result.kind === 'critical' ? 820 : 560);
+    } else if (state.actor === 'alch') {
+      let d = Math.max(1, Math.round(damage(Math.round(atkOf(member) * 0.5) + 1, e.def) * boost));
+      setMsg('テオは薬瓶を握った！');
+      await alchThrowAnimation();
+      e.hp = Math.max(0, e.hp - d);
+      flashEnemy();
+      vibrate(16);
+      floatText(String(d), 230, 86, '#ffd08a');
+      setMsg('テオの投薬！ ' + e.name + 'に ' + d + ' ダメージ！');
+      draw();
+      await delay(420);
     } else {
       let d = Math.max(1, Math.round(damage(Math.round(atkOf(member) * 0.5) + 1, e.def) * boost));
       setMsg('ミナは杖を構えた！');
@@ -2970,6 +3070,78 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
       requestAnimationFrame(frame);
     });
   }
+  // --- テオの演出 ---
+  // 薬瓶を放る動き。通常攻撃は札なし、ワザは札つきで同じ流れを使う。
+  function alchTossMotion(label, duration, kind) {
+    return new Promise(done => {
+      let started = performance.now(),
+        sounds = {};
+      function once(k, fn) {
+        if (!sounds[k]) {
+          sounds[k] = 1;
+          fn();
+        }
+      }
+      sfx('staffSwing');
+      function frame(now) {
+        let p = Math.min(1, (now - started) / duration);
+        // 振りかぶって、投げて、戻る
+        state.alchLunge =
+          p < 0.24
+            ? -10 * (p / 0.24)
+            : p < 0.44
+              ? -10 + 22 * ((p - 0.24) / 0.2)
+              : 12 * (1 - (p - 0.44) / 0.56);
+        state.alchLift = -5 * Math.sin(Math.PI * Math.min(1, p * 1.35));
+        state.alchFx = { kind, p, label };
+        if (kind === 'flask' && p > 0.62)
+          once('burst', () => {
+            sfx('burst');
+            cameraShake(3.5, 120);
+            vibrate(22);
+          });
+        draw();
+        if (p < 1) requestAnimationFrame(frame);
+        else {
+          state.alchFx = null;
+          resetBattleMotion();
+          draw();
+          done();
+        }
+      }
+      requestAnimationFrame(frame);
+    });
+  }
+  function alchThrowAnimation() {
+    return alchTossMotion(null, 660, 'flask');
+  }
+  function alchFlaskAnimation(label) {
+    return alchTossMotion(label, 1080, 'flask');
+  }
+  // 霧を焚く。回復と補助はこちら。
+  function alchMistAnimation(label) {
+    return new Promise(done => {
+      let started = performance.now(),
+        duration = BATTLE_EFFECTS.heal.duration;
+      sfx('heal');
+      function frame(now) {
+        let p = Math.min(1, (now - started) / duration);
+        state.alchCast = Math.sin(Math.PI * Math.min(1, p * 1.15));
+        state.alchLift = -4 * Math.sin(Math.PI * p);
+        state.battleDim = BATTLE_EFFECTS.heal.darken * Math.sin(Math.PI * p);
+        state.alchFx = { kind: 'mist', p, label };
+        draw();
+        if (p < 1) requestAnimationFrame(frame);
+        else {
+          state.alchFx = null;
+          resetBattleMotion();
+          draw();
+          done();
+        }
+      }
+      requestAnimationFrame(frame);
+    });
+  }
   function mageStaffAnimation() {
     return new Promise(done => {
       let started = performance.now(),
@@ -3298,9 +3470,7 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
       baseExp = foes.reduce((sum, e) => sum + e.exp, 0),
       earned = foes.reduce((sum, e) => sum + (Number(e.gold) || 0), 0),
       h = state.hero,
-      m = state.companion,
-      heroExp = Math.round(baseExp * (h.expBoost || 1)),
-      mageExp = Math.round(baseExp * (m.expBoost || 1));
+      heroExp = Math.round(baseExp * (h.expBoost || 1));
     setMsg(
       (foes.length > 1 ? '魔物たち' : foes[0].name) +
         'を倒した！ EXP ' +
@@ -3310,8 +3480,10 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
         'G を獲得！',
     );
     sfx('win');
-    h.exp += heroExp;
-    if (m.active) m.exp += mageExp;
+    // 経験値は仲間それぞれに入る。ためた者だけ増える取り分は各自で持っている
+    partyMembers().forEach(v => {
+      v.exp += Math.round(baseExp * (v.expBoost || 1));
+    });
     addGold(earned);
     await defeatEffect(!!boss);
     await applyLevelUps();
@@ -3366,8 +3538,7 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
     state.mode = 'field';
     state.x = 1;
     state.y = 10;
-    state.fx = 1;
-    state.fy = 10;
+    placeParty(1, 10);
     state.dir = 'up';
     state.walk = 0;
     state.steps = 0;
@@ -3398,8 +3569,7 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
     let st = CHAPTERS[4].start;
     state.x = st.x;
     state.y = st.y;
-    state.fx = st.x;
-    state.fy = st.y;
+    placeParty(st.x, st.y);
     state.dir = 'up';
     state.walk = 0;
     state.steps = 0;
@@ -3432,8 +3602,7 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
     let st = CHAPTERS[5].start;
     state.x = st.x;
     state.y = st.y;
-    state.fx = st.x;
-    state.fy = st.y;
+    placeParty(st.x, st.y);
     state.dir = 'up';
     state.walk = 0;
     state.steps = 0;
@@ -3463,8 +3632,7 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
     state.mode = 'field';
     state.x = 1;
     state.y = 10;
-    state.fx = 1;
-    state.fy = 10;
+    placeParty(1, 10);
     state.dir = 'up';
     state.walk = 0;
     state.steps = 0;
@@ -3478,10 +3646,14 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
     state.hero.hp = state.hero.maxHp;
     state.companion.active = true;
     state.companion.hp = state.companion.maxHp;
+    if (!state.alchemist.active) state.alchemist = memberForLevel('alch', state.hero.lv);
+    prepareSkills(state.alchemist, 'alch');
+    state.alchemist.active = true;
+    state.alchemist.hp = state.alchemist.maxHp;
     state.inventory.potion = Math.max(5, itemCount('potion'));
     state.hero.potions = state.inventory.potion;
     hideOverlay();
-    setMsg('月蝕の羽が空を指した。ルカとミナは星骸の塔へ！');
+    setMsg('塔の麓で錬成士テオが加わった！ 月蝕の羽が空を指す。三人は星骸の塔へ！');
     sfx('chapterStart');
     sync();
     draw();
@@ -3594,10 +3766,11 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
   }
   function gearNote(id) {
     let g = EQUIPMENT[id],
-      who = g.owner === 'both' ? 'ルカ・ミナ' : g.owner === 'mage' ? 'ミナ専用' : 'ルカ専用';
-    return (
-      (g.atk ? '攻 +' + g.atk : '守 +' + g.def) + '　' + who + (gearCount(id) ? '　所持' + gearCount(id) : '')
-    );
+      // 共用の防具は、そのとき仲間になっている全員の名前で呼ぶ
+      who =
+        g.owner === 'both' ? partyMembers().map(memberName).join('・') : MEMBER_INFO[g.owner].name + '専用',
+      stats = [g.atk ? '攻 +' + g.atk : '', g.def ? '守 +' + g.def : ''].filter(Boolean).join(' ');
+    return stats + '　' + who + (gearCount(id) ? '　所持' + gearCount(id) : '');
   }
   function shopRow(id, action, price, label, note) {
     return (
@@ -4064,14 +4237,29 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
   function showOverlay(type) {
     let clear = type === 'clear',
       h = state.hero,
-      m = state.companion,
       ch2 = state.chapter === 2,
       ch3 = state.chapter === 3,
       ch4 = state.chapter === 4,
       ch5 = state.chapter === 5,
-      party = m.active
-        ? '<br>ミナ LV ' + m.lv + '　HP ' + m.hp + ' / ' + m.maxHp + '　EXP ' + m.exp + ' / ' + m.next
-        : '';
+      // ルカ以外の仲間の行。加わった順にそのまま並べる
+      party = partyMembers()
+        .slice(1)
+        .map(
+          v =>
+            '<br>' +
+            memberName(v) +
+            ' LV ' +
+            v.lv +
+            '　HP ' +
+            v.hp +
+            ' / ' +
+            v.maxHp +
+            '　EXP ' +
+            v.exp +
+            ' / ' +
+            v.next,
+        )
+        .join('');
     $('#overlay').classList.toggle('clear-screen', clear);
     if (clear) {
       if (ch5) {
@@ -4226,6 +4414,7 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
     }
     if (state.mode === 'field' || state.mode === 'town' || !state.enemy) {
       drawMap();
+      if (state.alchemist?.active) drawFieldAlch(state.gx * T + 10, state.gy * T + 10, state.dir, state.walk);
       if (state.companion.active)
         drawFieldCompanion(state.fx * T + 10, state.fy * T + 10, state.dir, state.walk);
       drawFieldHero(state.x * T + 10, state.y * T + 10, state.dir, state.walk);
@@ -5121,6 +5310,108 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
     X.restore();
     return true;
   }
+  // テオの絵はまだ無いので、届くまではドット絵で立たせておく。
+  // 絵が届いたら、ルカ・ミナと同じ読み込みにそのまま乗せ替えられる:
+  //   1. ASSETS に alchBattleSheet(1536x1024, 3列2行の6コマ) と
+  //      alchField(640x640, 2列2行で 下/上/左/右) を足す
+  //   2. loadBattleSheet / loadFieldSheet('teo', ...) を呼ぶ
+  //   3. drawBattleAlch と drawFieldAlch で、読み込めていれば描画を差し替える
+  // 絵の背景は純緑のクロマキーで抜くので、衣装に緑を使わないこと。
+  // 足元が y=0 に来るように描く。褐色の外套に琥珀の前掛け、右手に香炉。
+  function paintAlchFigure(scale, bob = 0) {
+    X.save();
+    X.scale(scale, scale);
+    X.fillStyle = '#05081799';
+    X.fillRect(-8, -2, 16, 3);
+    X.fillStyle = '#7a4b2a';
+    X.fillRect(-7, -19 + bob, 14, 18);
+    X.fillStyle = '#c98a3c';
+    X.fillRect(-8, -11 + bob, 16, 11);
+    X.fillStyle = '#e6d6bd';
+    X.fillRect(-5, -14 + bob, 10, 10);
+    X.fillStyle = '#a8632f';
+    X.fillRect(-7, -26 + bob, 14, 10);
+    X.fillStyle = '#ffd166';
+    X.fillRect(-5, -22 + bob, 4, 3);
+    X.fillRect(1, -22 + bob, 4, 3);
+    // 香炉。細長く明るいので、装備の色替えにも拾われやすい形にしてある
+    X.fillStyle = '#d9b14c';
+    X.fillRect(8, -23 + bob, 2, 21);
+    X.fillRect(6, -26 + bob, 6, 3);
+    X.fillStyle = '#ffb347';
+    X.fillRect(7, -29 + bob, 4, 2);
+    X.restore();
+  }
+  function drawFieldAlch(px, py, dir = 'down', frame = 0) {
+    X.save();
+    X.globalAlpha = state.alchemist.hp > 0 ? 1 : 0.42;
+    X.translate(Math.round(px), Math.round(py) + 11);
+    paintAlchFigure(0.85, frame === 1 || frame === 3 ? -1 : 0);
+    X.restore();
+  }
+  function drawBattleAlch() {
+    if (!state.alchemist?.active) return;
+    let cast = state.alchCast || 0,
+      idle = state.busy ? 0 : Math.sin(performance.now() / 330 + 3.1),
+      x = memberAnchorX(state.alchemist) + (state.alchLunge || 0) + (state.alchHit ? -5 : 0),
+      bottom = 190 + (state.alchLift || 0) - cast * 7 + idle * 1.5,
+      h = memberHeight(state.alchemist) + cast * 6;
+    X.save();
+    X.globalAlpha = state.alchemist.hp > 0 ? 1 : 0.35;
+    X.translate(x, bottom);
+    X.rotate((state.alchHit ? -0.07 : 0) + idle * 0.006);
+    if (cast > 0.05) {
+      X.globalCompositeOperation = 'lighter';
+      X.strokeStyle = 'rgba(255,190,110,' + (0.3 + cast * 0.5) + ')';
+      X.lineWidth = 2;
+      X.beginPath();
+      X.ellipse(0, -h * 0.5, 16 + cast * 22, 6 + cast * 7, 0, 0, Math.PI * 2);
+      X.stroke();
+      X.globalCompositeOperation = 'source-over';
+    }
+    paintAlchFigure(h / 31);
+    X.restore();
+  }
+  // テオの演出。投げた薬瓶と、立ちのぼる霧。ワザのときだけ札を出す。
+  function drawAlchFx() {
+    let fx = state.alchFx;
+    if (!fx) return;
+    let p = fx.p,
+      from = memberAnchorX(state.alchemist),
+      alpha = Math.sin(Math.PI * Math.min(1, p * 1.05));
+    X.save();
+    X.globalCompositeOperation = 'lighter';
+    if (fx.kind === 'flask') {
+      let fly = Math.min(1, p / 0.62),
+        fxx = from + (235 - from) * fly,
+        fxy = 150 - Math.sin(Math.PI * fly) * 72;
+      if (fly < 1) {
+        X.fillStyle = '#ffd08a';
+        X.fillRect(fxx - 3, fxy - 3, 6, 6);
+        X.fillStyle = '#ff8a3c';
+        X.fillRect(fxx - 1, fxy - 1, 3, 3);
+      } else {
+        let q = (p - 0.62) / 0.38;
+        for (let i = 0; i < 18; i++) {
+          let a = i * 2.399 + q * 3,
+            r = 8 + q * (44 + (i % 5) * 9);
+          X.fillStyle = i % 3 ? '#ff8a3c' : '#ffe6a6';
+          X.fillRect(235 + Math.cos(a) * r, 112 + Math.sin(a) * r * 0.72, 3, 3);
+        }
+      }
+    } else {
+      for (let i = 0; i < 26; i++) {
+        let a = i * 1.7 + p * 2,
+          cx = 30 + ((i * 37) % 150),
+          cy = 180 - ((p * 90 + i * 11) % 108);
+        X.fillStyle =
+          i % 3 ? 'rgba(150,255,205,' + alpha * 0.7 + ')' : 'rgba(255,232,166,' + alpha * 0.7 + ')';
+        X.fillRect(cx + Math.sin(a) * 5, cy, 3, 4);
+      }
+    }
+    X.restore();
+    if (fx.label) drawSkillLabel({ label: fx.label, p, type: 'alch' });
+  }
   function drawFieldCompanion(px, py, dir = 'down', frame = 0) {
     if (drawFieldSprite('mina', px, py, dir, frame, state.companion.hp > 0)) return;
     X.save();
@@ -5437,7 +5728,7 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
   function drawBattleHero() {
     let party = state.companion.active,
       baseX = memberAnchorX(state.hero),
-      h = party ? 145 : 166,
+      h = memberHeight(state.hero),
       idle = state.busy ? 0 : Math.sin(performance.now() / 310),
       x = baseX + (state.heroLunge || 0) + (state.heroHit ? -5 + idle * 2 : 0),
       y = 193 + (state.heroLift || 0) + idle * 1.5;
@@ -5448,9 +5739,10 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
     let pose = state.battlePose || 0,
       cut = skin(battleHeroFrames[pose] || battleHeroFrames[0] || battleHeroCut, state.hero),
       w = (h * cut.width) / cut.height;
-    if (w > 158) {
-      h *= 158 / w;
-      w = 158;
+    let maxW = partyMembers().length > 2 ? 126 : 158;
+    if (w > maxW) {
+      h *= maxW / w;
+      w = maxW;
     }
     let angle = ([0, -0.025, -0.045, 0.07, 0.035, -0.02][pose] || 0) + (state.heroHit ? -0.08 : idle * 0.006),
       stretch = state.heroStretch || 1,
@@ -5482,7 +5774,7 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
       idle = state.busy ? 0 : Math.sin(performance.now() / 360 + 1.7),
       x = memberAnchorX(state.companion) + (state.mageLunge || 0) + cast * 12 + (state.mageHit ? -5 : 0),
       bottom = 190 + (state.mageLift || 0) - cast * 9 + idle * 1.6,
-      h = 132 + cast * 8;
+      h = memberHeight(state.companion) + cast * 8;
     if (!mageBattleReady) {
       drawFieldCompanion(x, bottom - 18, 'right', cast > 0.4 ? 1 : 0);
       return;
@@ -5490,9 +5782,10 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
     let frame = state.mageFrame || 0,
       cut = skin(mageBattleFrames[frame] || mageBattleFrames[0] || mageBattleCut, state.companion),
       w = (h * cut.width) / cut.height;
-    if (w > 128) {
-      h *= 128 / w;
-      w = 128;
+    let maxW = partyMembers().length > 2 ? 104 : 128;
+    if (w > maxW) {
+      h *= maxW / w;
+      w = maxW;
     }
     X.save();
     X.globalAlpha = state.companion.hp > 0 ? 1 : 0.35;
@@ -5522,11 +5815,12 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
       members = [
         { m: state.hero, x: memberAnchorX(state.hero), y: 157 },
         { m: state.companion, x: memberAnchorX(state.companion), y: 153 },
+        { m: state.alchemist, x: memberAnchorX(state.alchemist), y: 155 },
       ];
     X.save();
     X.globalCompositeOperation = 'lighter';
     for (let { m, x, y } of members) {
-      if (!m || (!m.active && m === state.companion) || m.hp <= 0) continue;
+      if (!m || (m !== state.hero && !m.active) || m.hp <= 0) continue;
       if (m.guarding) {
         for (let i = 0; i < 3; i++) {
           X.strokeStyle = 'rgba(90,220,255,' + (0.42 - i * 0.1) + ')';
@@ -5677,6 +5971,7 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
     drawBattleAuras();
     drawBattleHero();
     drawBattleMage();
+    drawBattleAlch();
     others.forEach((foe, i) => drawEnemy(foe, i ? 188 : 285, 112, visible.length > 2 ? 0.5 : 0.6));
     drawEnemy(e, targetX, 112, targetScale);
     if (group) {
@@ -5704,6 +5999,7 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
     if (state.criticalFx) drawCriticalFx(state.criticalFx);
     if (state.skillFx) drawBattleEffectV2(state.skillFx);
     drawBattleMotionFx();
+    drawAlchFx();
     X.fillStyle = '#080b13ee';
     X.fillRect(153, 10, 157, 31);
     X.strokeStyle =
