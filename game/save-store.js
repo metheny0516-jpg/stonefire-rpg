@@ -31,7 +31,9 @@ export function migrateSave(raw) {
   if (!SUPPORTED_VERSIONS.has(Number(raw.version))) return null;
 
   // 旧版のくすり数を、新しい所持品データへ引き継ぐ。
-  const chapter = raw.chapter === 3 ? 3 : raw.chapter === 2 ? 2 : 1;
+  // 章は足され続けるので、ここに上限を書かない。書くと、章を追加したときに
+  // 追加ぶんのセーブが黙って第1章へ倒される。読めない値だけ第1章にする。
+  const chapter = Math.max(1, Math.floor(Number(raw.chapter)) || 1);
   const legacyPotions = Math.max(0, Number(raw.hero?.potions) || 0);
   const hadInventory = raw.inventory && typeof raw.inventory === 'object';
   const inventory = hadInventory ? { ...raw.inventory } : { potion: legacyPotions };
