@@ -56,9 +56,10 @@ node tests/ast-compare.mjs
 | `unlock-regression.mjs` | 討伐の証を売っても解錠状態が失われないこと |
 | `skills-regression.mjs` | スタン／吸収／ディフレクト／蘇生／フィールド回復 |
 | `chapter5-regression.mjs` | 第5章の2階層・宝箱・落とし穴・光苔・階段・ボス |
+| `uses-regression.mjs` | ワザ回数の持ち越し・セーブ・休息／多段斬りの防御／格上の閃き |
 
 ```
-for f in travel unlock skills chapter5; do node tests/$f-regression.mjs; done
+for f in travel unlock skills chapter5 uses; do node tests/$f-regression.mjs; done
 ```
 
 ## 4. 効果音の実測 — `audio-measure.mjs`

@@ -23,6 +23,7 @@ import {
   rollEncounterGroup,
   selectEnemyAction,
   sparkChanceForAction,
+  sparkThreat,
 } from './battle-rules.js';
 import {
   clearSlot,
@@ -170,6 +171,26 @@ import { createGameAudio } from './audio-engine.js?v=54-slash';
     m.next = Math.max(1, Number(m.next) || 20);
     return m;
   }
+  // ---- ワザの使用回数 ----
+  // 戦闘をまたいで減ったまま残る。戻せるのは祭壇・宿・章のはじまりだけ。
+  // 戦闘ごとに戻していたころは、常に最上位のワザを撃つのが最適解になり、
+  // 三日月返しのような序盤のワザに使い道が無かった。
+  function fullSkillUses() {
+    return Object.fromEntries(SKILLS.map(s => [s.id, s.uses]));
+  }
+  function normalizeSkillUses(raw) {
+    if (!raw || typeof raw !== 'object') return fullSkillUses();
+    let out = {};
+    SKILLS.forEach(s => {
+      let v = Math.floor(Number(raw[s.id]));
+      // 古いセーブには項目が無い。そのときは満タン扱いにする。
+      out[s.id] = Number.isFinite(v) ? Math.max(0, Math.min(s.uses, v)) : s.uses;
+    });
+    return out;
+  }
+  function restoreSkillUses() {
+    state.skillUses = fullSkillUses();
+  }
   function prepareSkills(member, owner) {
     let learned = Array.isArray(member.learnedSkills)
       ? member.learnedSkills.filter(id => SKILLS.some(s => s.id === id && s.owner === owner))
@@ -257,8 +278,7 @@ import { createGameAudio } from './audio-engine.js?v=54-slash';
       busy: false,
       skillMenu: false,
       itemMenu: false,
-      skillUses: {},
-      mageUses: {},
+      skillUses: fullSkillUses(),
       skillFx: null,
       storyFlags: {},
       cleared: false,
@@ -382,6 +402,7 @@ import { createGameAudio } from './audio-engine.js?v=54-slash';
       hero: state.hero,
       companion: state.companion,
       inventory: state.inventory,
+      skillUses: { ...(state.skillUses || {}) },
       bossAlive: state.bossAlive,
       storyFlags: state.storyFlags,
       cleared: !!state.cleared,
@@ -472,6 +493,7 @@ import { createGameAudio } from './audio-engine.js?v=54-slash';
       hero: h,
       companion: m,
       inventory,
+      skillUses: normalizeSkillUses(d.skillUses),
       bossAlive: d.bossAlive !== false,
       storyFlags: d.storyFlags || {},
       cleared: !!d.cleared,
@@ -1633,18 +1655,17 @@ import { createGameAudio } from './audio-engine.js?v=54-slash';
       state.hero.hp = state.hero.maxHp;
       if (state.companion.active) state.companion.hp = state.companion.maxHp;
       state.steps = 0;
-      state.skillUses = Object.fromEntries(SKILLS.map(s => [s.id, s.uses]));
-      state.mageUses = { heal: 2 };
+      restoreSkillUses();
       setMsg(
         state.chapter === 5
-          ? '地脈の湧き水が二人を洗った。戦闘不能も癒え、全員HP全回復！'
+          ? '地脈の湧き水が二人を洗った。戦闘不能も癒え、HPとワザが全回復！'
           : state.chapter === 4
-            ? '宵の残り火が二人を包んだ。戦闘不能も癒え、全員HP全回復！'
+            ? '宵の残り火が二人を包んだ。戦闘不能も癒え、HPとワザが全回復！'
             : state.chapter === 3
-              ? '星詠みの環が輝いた。戦闘不能も癒え、全員HP全回復！'
+              ? '星詠みの環が輝いた。戦闘不能も癒え、HPとワザが全回復！'
               : state.chapter === 2
-                ? '月の泉の光が二人を包んだ。戦闘不能も癒え、全員HP全回復！'
-                : '灯火の祭壇が輝いた。戦闘不能も癒え、HP全回復！',
+                ? '月の泉の光が二人を包んだ。戦闘不能も癒え、HPとワザが全回復！'
+                : '灯火の祭壇が輝いた。戦闘不能も癒え、HPとワザが全回復！',
       );
       sfx('shrine');
       sync();
@@ -1659,14 +1680,7 @@ import { createGameAudio } from './audio-engine.js?v=54-slash';
     if (state.steps > 3 && Math.random() < 0.135) {
       state.steps = 0;
       saveGame();
-      startBattle(
-        rollEncounterGroup(
-          isTower()
-            ? dungeon().encounters[currentFloor()] || ENCOUNTERS[state.chapter]
-            : ENCOUNTERS[state.chapter],
-          state.chapter,
-        ),
-      );
+      startBattle(rollEncounterGroup(encounterPool(), state.chapter));
       return true;
     }
     setMsg(
@@ -1945,8 +1959,6 @@ import { createGameAudio } from './audio-engine.js?v=54-slash';
     state.itemMenu = false;
     state.targetMenu = false;
     targetPick = null;
-    state.skillUses = Object.fromEntries(SKILLS.map(s => [s.id, s.uses]));
-    state.mageUses = { heal: 2 };
     setMsg(
       e.boss
         ? e.name + 'が行く手を遮った！'
@@ -2045,6 +2057,18 @@ import { createGameAudio } from './audio-engine.js?v=54-slash';
     let hurt = party.filter(v => v.hp > 0 && v.hp < v.maxHp);
     return hurt.sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp)[0] || null;
   }
+  // いまの階層に出る雑魚の一覧。塔は階ごとに違う。
+  function encounterPool() {
+    return (isTower() ? dungeon()?.encounters?.[currentFloor()] : null) || ENCOUNTERS[state.chapter] || [];
+  }
+  // その章の雑魚の平均経験値。閃きの「格上」判定の物差しになる。
+  function chapterEnemyBaseline() {
+    let pool = encounterPool()
+      .map(id => ENEMIES[id])
+      .filter(Boolean);
+    if (!pool.length) return 1;
+    return pool.reduce((sum, e) => sum + (Number(e.exp) || 0), 0) / pool.length;
+  }
   async function maybeSpark(member, action) {
     let candidates = SKILLS.filter(
       s => s.owner === state.actor && member.lv >= s.lv && !member.learnedSkills.includes(s.id),
@@ -2053,7 +2077,13 @@ import { createGameAudio } from './audio-engine.js?v=54-slash';
       member.chargeUsed = false;
       return false;
     }
-    let chance = sparkChanceForAction(action, !!member.chargeUsed),
+    // 格上ほど閃きやすい。いま場にいる中で一番格の高い相手を基準にする
+    let toughest = livingEnemies().reduce((a, b) => (a && (a.exp || 0) >= (b.exp || 0) ? a : b), null),
+      chance = sparkChanceForAction(
+        action,
+        !!member.chargeUsed,
+        sparkThreat(toughest, chapterEnemyBaseline()),
+      ),
       preferred = candidates.filter(s => s.spark?.includes(action));
     member.chargeUsed = false;
     if (Math.random() >= chance) return false;
@@ -2153,7 +2183,7 @@ import { createGameAudio } from './audio-engine.js?v=54-slash';
       s = SKILLS.find(v => v.id === id && v.owner === state.actor);
     if (!s || member.hp <= 0 || !member.learnedSkills.includes(id)) return;
     if ((state.skillUses[id] || 0) <= 0) {
-      setMsg(s.name + 'はこの戦闘ではもう使えない。');
+      setMsg(s.name + 'はもう使えない。祭壇か宿で休まないと戻らない。');
       closeSubMenu();
       return;
     }
@@ -2225,12 +2255,13 @@ import { createGameAudio } from './audio-engine.js?v=54-slash';
         lines = [];
       await skillMotion(s);
       foes.forEach((foe, i) => {
-        let base = s.ignoreDef
-            ? Math.max(1, atkOf(member) + 2 + rand(-2, 2))
-            : damage(atkOf(member) + 2, foe.def),
+        // 多段は「1段ぶんの攻撃力」を段数ぶん叩き込む。防御は段ごとに引かれるので、
+        // 硬い相手には通らず、柔らかい相手には刺さる。敵の連続攻撃も同じ扱い。
+        let perHit = Math.round(((atkOf(member) + 2) * s.power) / hits),
           total = 0;
         for (let h = 0; h < hits; h++) {
-          let d = Math.max(2, Math.round(base * (s.power / hits) * boost));
+          let raw = s.ignoreDef ? Math.max(1, perHit + rand(-2, 2)) : damage(perHit, foe.def),
+            d = Math.max(2, Math.round(raw * boost));
           foe.hp = Math.max(0, foe.hp - d);
           total += d;
         }
@@ -3368,6 +3399,7 @@ import { createGameAudio } from './audio-engine.js?v=54-slash';
     state.skillMenu = false;
     state.itemMenu = false;
     state.hero.hp = state.hero.maxHp;
+    restoreSkillUses();
     state.inventory.potion = Math.max(4, itemCount('potion'));
     state.hero.potions = state.inventory.potion;
     if (!state.companion.active) state.companion = mageForLevel(state.hero.lv);
@@ -3402,6 +3434,7 @@ import { createGameAudio } from './audio-engine.js?v=54-slash';
     state.itemMenu = false;
     state.targetMenu = false;
     state.hero.hp = state.hero.maxHp;
+    restoreSkillUses();
     state.companion.active = true;
     state.companion.hp = state.companion.maxHp;
     state.inventory.potion = Math.max(6, itemCount('potion'));
@@ -3436,6 +3469,7 @@ import { createGameAudio } from './audio-engine.js?v=54-slash';
     state.itemMenu = false;
     state.targetMenu = false;
     state.hero.hp = state.hero.maxHp;
+    restoreSkillUses();
     state.companion.active = true;
     state.companion.hp = state.companion.maxHp;
     state.inventory.potion = Math.max(8, itemCount('potion'));
@@ -3466,6 +3500,7 @@ import { createGameAudio } from './audio-engine.js?v=54-slash';
     state.skillMenu = false;
     state.itemMenu = false;
     state.hero.hp = state.hero.maxHp;
+    restoreSkillUses();
     state.companion.active = true;
     state.companion.hp = state.companion.maxHp;
     state.inventory.potion = Math.max(5, itemCount('potion'));
@@ -3543,12 +3578,13 @@ import { createGameAudio } from './audio-engine.js?v=54-slash';
           m.hp = m.maxHp;
         });
         state.companion.hp = state.companion.maxHp;
-        state.skillUses = Object.fromEntries(SKILLS.map(v => [v.id, v.uses]));
-        state.mageUses = { heal: 2 };
+        restoreSkillUses();
         sfx('heal');
         hideOverlay();
         setMsg(
-          hurt ? 'ひと晩ぐっすり眠った。全員のHPが全快した！' : 'ひと晩ぐっすり眠った。気力が満ちている。',
+          hurt
+            ? 'ひと晩ぐっすり眠った。HPもワザの回数も全快した！'
+            : 'ひと晩ぐっすり眠った。ワザの回数も戻り、気力が満ちている。',
         );
         sync();
         draw();

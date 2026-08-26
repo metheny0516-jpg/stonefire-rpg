@@ -101,8 +101,25 @@ export function waitBonuses(currentExpBoost = 1) {
   return { charged: true, expBoost: Math.min(1.5, Math.max(1, currentExpBoost) + 0.15) };
 }
 
-export function sparkChanceForAction(action, charged = false) {
+// 相手の「格」。その章の雑魚を 1.0 とし、それより格上なら 1 を超える。
+// 攻撃力どうしの比は使わない。ルカの攻撃力は武器で跳ね上がるので、
+// 雑魚が相対的に弱くなり、序盤ほど閃かなくなってしまう。
+// 経験値は作り手が付けた強さの値そのものなので、章をまたいでも比が安定する
+// (どの章もボスは雑魚の 4〜6 倍)。
+export function sparkThreat(foe, chapterBaseline) {
+  const value = Math.max(0, Number(foe?.exp) || 0);
+  const base = Math.max(1, Number(chapterBaseline) || 1);
+  if (!value) return 1;
+  // そのままだと差が開きすぎるので平方根で寝かせる
+  return Math.max(0.5, Math.min(2.5, Math.sqrt(value / base)));
+}
+
+export function sparkChanceForAction(action, charged = false, threat = 1) {
   // ときどき閃く程度に抑える。ためた直後だけ +3%。
   const base = { attack: 0.04, guard: 0.04, wait: 0.05, skill: 0.03, item: 0.01 }[action];
-  return (base === undefined ? 0.02 : base) + (charged ? 0.03 : 0);
+  const raw = (base === undefined ? 0.02 : base) + (charged ? 0.03 : 0);
+  // 格上補正: 雑魚(threat≈1)で従来どおり。ボスは頭打ちの 2.5 倍まで伸びる。
+  const t = Math.max(0.5, Math.min(2.5, Number(threat) || 1));
+  const boost = t <= 1 ? Math.max(0.6, t) : Math.min(2.5, 1 + (t - 1) * 1.5);
+  return Math.min(0.5, raw * boost);
 }
