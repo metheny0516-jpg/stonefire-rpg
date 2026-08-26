@@ -10,6 +10,8 @@ import {
   EQUIPMENT,
   ITEMS,
   MAPS,
+  MEMBER_INFO,
+  MEMBER_ORDER,
   SKILLS,
   STARTING_GEAR,
   TILE_SIZE,
@@ -133,6 +135,43 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
   function cameraShake(power, duration) {
     state.cameraShake = { power, until: performance.now() + duration };
   }
+  // --- パーティの並び ---
+  // 「鍵 → メンバー」の対応をここだけに持たせ、名前・立ち位置・成長は
+  // すべて MEMBER_INFO から引く。呼び出し側に hero/mage の分岐を作らない。
+  function memberByKey(key) {
+    return key === 'mage' ? state?.companion : state?.hero;
+  }
+  function memberKey(member) {
+    return member === state?.companion ? 'mage' : 'hero';
+  }
+  function memberInfo(member) {
+    return MEMBER_INFO[memberKey(member)];
+  }
+  // ルカは常に居る。あとから加わる仲間は active が立ってから数える。
+  function memberJoined(key) {
+    return key === 'hero' ? true : !!memberByKey(key)?.active;
+  }
+  function partyMembers() {
+    return MEMBER_ORDER.filter(key => memberJoined(key)).map(memberByKey);
+  }
+  function livingMembers() {
+    return partyMembers().filter(v => v.hp > 0);
+  }
+  function memberName(member) {
+    return memberInfo(member).name;
+  }
+  // 立ち絵の足元。人数が増えるほど左へ詰める。
+  function memberAnchorX(member) {
+    let anchors = memberInfo(member).anchorX;
+    return anchors[partyMembers().length] ?? anchors[Object.keys(anchors).pop()];
+  }
+  // ダメージ数字を出す位置。立ち絵の足元とは少しずれる。
+  function memberFloatX(member) {
+    return memberInfo(member).floatX;
+  }
+  function setMemberHit(member, on) {
+    state[memberInfo(member).hitFlag] = on;
+  }
   function mageForLevel(lv = 1) {
     let m = {
       active: false,
@@ -194,7 +233,7 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
     let heal = Math.min(healPower(src, target), target.maxHp - target.hp);
     if (heal <= 0 && !revived) return { heal: 0, revived: false };
     target.hp = Math.max(1, target.hp + heal);
-    floatText('+' + heal, target === state.hero ? 53 : 112, 175, revived ? '#ffe9a0' : '#9ffff0');
+    floatText('+' + heal, memberFloatX(target), 175, revived ? '#ffe9a0' : '#9ffff0');
     return { heal, revived };
   }
   function healPower(src, target) {
@@ -656,10 +695,10 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
     $('#msg').textContent = t;
   }
   function currentActor() {
-    return state.actor === 'mage' ? state.companion : state.hero;
+    return memberByKey(state.actor);
   }
   function actorName(member = currentActor()) {
-    return member === state.hero ? 'ルカ' : 'ミナ';
+    return memberName(member);
   }
   function sync() {
     let h = state.hero,
@@ -998,16 +1037,13 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
     return Math.max(1, (Number(member?.atk) || 0) + gearBonus(member, 'atk'));
   }
   function spdOf(member) {
-    return Math.max(
-      1,
-      (Number(member?.spd) || (member === state?.companion ? 9 : 10)) + gearBonus(member, 'spd'),
-    );
+    return Math.max(1, (Number(member?.spd) || memberInfo(member).baseSpd) + gearBonus(member, 'spd'));
   }
   function defOf(member) {
     return Math.max(0, (Number(member?.def) || 0) + gearBonus(member, 'def'));
   }
   function ownerOf(member) {
-    return member === state.companion ? 'mage' : 'hero';
+    return memberKey(member);
   }
   function gearCount(id) {
     return Math.max(0, Number(state.gear?.[id]) || 0);
@@ -1814,7 +1850,7 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
       sfx('spark');
       function frame(now) {
         let p = Math.min(1, (now - started) / duration);
-        state.sparkFx = { p, name, actor: member === state.hero ? 'hero' : 'mage' };
+        state.sparkFx = { p, name, actor: memberKey(member) };
         if (p > 0.42 && p < 0.58) {
           state.heroLift = member === state.hero ? -5 : 0;
           state.mageCast = member === state.companion ? 1 : 0;
@@ -1929,7 +1965,7 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
     });
     state.enemy = state.enemies[0];
     let e = state.enemy;
-    for (let member of [state.hero, state.companion]) {
+    for (let member of partyMembers()) {
       member.deflect = 0;
       member.guarding = false;
       member.charged = false;
@@ -2037,7 +2073,7 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
   // revive=true の回復手段は戦闘不能の仲間も対象にする。
   // 倒れている仲間がいれば、そちらを最優先で選ぶ。
   function mostInjuredMember(revive = false) {
-    let party = [state.hero, ...(state.companion.active ? [state.companion] : [])];
+    let party = partyMembers();
     if (revive) {
       let downed = party.filter(v => v.hp <= 0);
       if (downed.length) return downed[0];
@@ -2124,9 +2160,7 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
     return i <= 0 ? 283 : 186;
   }
   function healTargets(revive = false) {
-    return [state.hero, ...(state.companion.active ? [state.companion] : [])].filter(v =>
-      revive ? v.hp < v.maxHp : v.hp > 0 && v.hp < v.maxHp,
-    );
+    return partyMembers().filter(v => (revive ? v.hp < v.maxHp : v.hp > 0 && v.hp < v.maxHp));
   }
   function skillMotion(s) {
     if (state.actor === 'hero') {
@@ -2259,7 +2293,7 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
         let back = Math.min(Math.round(sum * s.drain), member.maxHp - member.hp);
         if (back > 0) {
           member.hp += back;
-          floatText('+' + back, member === state.hero ? 53 : 112, 175, '#ff9fd0');
+          floatText('+' + back, memberFloatX(member), 175, '#ff9fd0');
           extra += ' ' + actorName(member) + 'は ' + back + ' 吸収した！';
         }
       }
@@ -3060,12 +3094,17 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
       requestAnimationFrame(frame);
     });
   }
-  function livingMembers() {
-    return [state.hero, ...(state.companion.active ? [state.companion] : [])].filter(v => v.hp > 0);
-  }
+  // 敵の狙い先。ルカに寄せつつ、仲間が増えたぶんだけ被弾が散るようにする。
   function pickEnemyTarget() {
     let living = livingMembers();
-    return living.length === 1 ? living[0] : Math.random() < 0.58 ? state.hero : state.companion;
+    if (living.length <= 1) return living[0] || null;
+    let weights = living.map(m => memberInfo(m).targetWeight),
+      roll = Math.random() * weights.reduce((sum, w) => sum + w, 0);
+    for (let i = 0; i < living.length; i++) {
+      roll -= weights[i];
+      if (roll < 0) return living[i];
+    }
+    return living[living.length - 1];
   }
   async function enemyHit(target, multiplier, label, savage = false) {
     if (!target || target.hp <= 0) return 0;
@@ -3073,7 +3112,7 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
     if (target.deflect > 0) {
       target.deflect -= 1;
       sfx('guard');
-      floatText('弾いた!', target === state.hero ? 53 : 112, 178, '#8fe4ff', 0.9);
+      floatText('弾いた!', memberFloatX(target), 178, '#8fe4ff', 0.9);
       setMsg(
         actorName(target) +
           'は攻撃を弾いた！' +
@@ -3084,8 +3123,7 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
       await delay(520);
       return 0;
     }
-    let isHero = target === state.hero,
-      name = isHero ? 'ルカ' : 'ミナ',
+    let name = memberName(target),
       d = Math.max(
         1,
         Math.round(
@@ -3100,21 +3138,19 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
     }
     target.hp = Math.max(0, target.hp - d);
     if (target.hp > 0 && target.hp <= target.maxHp * 0.25) sfx('lowHp');
-    if (isHero) state.heroHit = 1;
-    else state.mageHit = 1;
+    setMemberHit(target, 1);
     wrap.classList.remove('shake');
     void wrap.offsetWidth;
     wrap.classList.add('shake');
     setTimeout(() => {
       sfx('hit');
       vibrate(savage ? [70, 35, 120, 35, 70] : [45, 25, 55]);
-      if (isHero) state.heroHit = 0;
-      else state.mageHit = 0;
+      setMemberHit(target, 0);
       if (state.mode === 'battle') draw();
     }, 150);
     floatText(
       String(d) + (savage ? '!!' : ''),
-      isHero ? 53 : 112,
+      memberFloatX(target),
       185,
       savage ? '#ff3b2e' : target.guarding ? '#7be8ff' : '#ff746c',
       savage ? 1.45 : 1,
@@ -3177,9 +3213,9 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
   // --- 行動順: 素早さ順に並べたキューを1ラウンドぶん作る ---
   function buildTurnOrder() {
     let units = [];
-    if (state.hero.hp > 0) units.push({ k: 'hero', spd: spdOf(state.hero) });
-    if (state.companion.active && state.companion.hp > 0)
-      units.push({ k: 'mage', spd: spdOf(state.companion) });
+    partyMembers().forEach(m => {
+      if (m.hp > 0) units.push({ k: memberKey(m), spd: spdOf(m) });
+    });
     (state.enemies || []).forEach((e, i) => {
       if (e.hp > 0) units.push({ k: 'enemy', i, spd: Math.max(1, Number(e.spd) || 8) });
     });
@@ -3218,8 +3254,8 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
         if (state.mode !== 'battle') return;
         continue;
       }
-      let member = u.k === 'hero' ? state.hero : state.companion;
-      if (!member || member.hp <= 0 || (u.k === 'mage' && !member.active)) continue;
+      let member = memberByKey(u.k);
+      if (!member || member.hp <= 0 || !memberJoined(u.k)) continue;
       // 防御は「次に自分の番が回ってくるまで」持続する
       member.guarding = false;
       chooseEnemyTarget();
@@ -3231,38 +3267,30 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
       return;
     }
   }
+  // レベルを1つ上げる。読み込み時の追いつき計算とも共有する。
+  function raiseLevel(member) {
+    let info = memberInfo(member),
+      g = info.growth;
+    member.exp -= member.next;
+    member.lv++;
+    member.next = Math.floor(member.next * 1.55);
+    member.maxHp += g.maxHp;
+    member.atk += g.atk;
+    member.def += g.def;
+    if (member.lv % g.spdEvery === 0) member.spd = (member.spd || info.baseSpd) + 1;
+    member.hp = member.maxHp;
+  }
   async function applyLevelUps() {
-    let h = state.hero,
-      m = state.companion;
-    while (h.exp >= h.next) {
-      h.exp -= h.next;
-      h.lv++;
-      h.next = Math.floor(h.next * 1.55);
-      h.maxHp += 8;
-      h.atk += 3;
-      h.def += 2;
-      if (h.lv % 2 === 0) h.spd = (h.spd || 10) + 1;
-      h.hp = h.maxHp;
-      sync();
-      sfx('level');
-      setMsg('ルカが LV ' + h.lv + 'になった！ 能力上昇・HP全回復！');
-      await delay(950);
-    }
-    if (m.active)
-      while (m.exp >= m.next) {
-        m.exp -= m.next;
-        m.lv++;
-        m.next = Math.floor(m.next * 1.55);
-        m.maxHp += 6;
-        m.atk += 3;
-        m.def += 1;
-        if (m.lv % 2 === 0) m.spd = (m.spd || 9) + 1;
-        m.hp = m.maxHp;
+    for (let member of partyMembers()) {
+      let info = memberInfo(member);
+      while (member.exp >= member.next) {
+        raiseLevel(member);
         sync();
         sfx('level');
-        setMsg('ミナが LV ' + m.lv + 'になった！ 魔力上昇・HP全回復！');
-        await delay(1000);
+        setMsg(info.name + 'が LV ' + member.lv + 'になった！ ' + info.levelNote + '・HP全回復！');
+        await delay(info.levelDelay);
       }
+    }
   }
   function grantDrops(enemy) {
     let found = rollDrops(enemy);
@@ -3299,7 +3327,7 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
       sync();
       await delay(850);
     }
-    for (let member of [h, m]) {
+    for (let member of partyMembers()) {
       member.guarding = false;
       member.charged = false;
       member.expBoost = 1;
@@ -3467,12 +3495,6 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
   function inventoryEntries() {
     return Object.entries(ITEMS).filter(([id]) => itemCount(id) > 0);
   }
-  function partyMembers() {
-    return [state.hero, ...(state.companion.active ? [state.companion] : [])];
-  }
-  function memberName(member) {
-    return member === state.companion ? 'ミナ' : 'ルカ';
-  }
   function openTownCard(html) {
     $('#overlay').classList.remove('clear-screen', 'slot-screen');
     $('#overlayCard').innerHTML = html;
@@ -3529,7 +3551,6 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
         members.forEach(m => {
           m.hp = m.maxHp;
         });
-        state.companion.hp = state.companion.maxHp;
         state.skillUses = Object.fromEntries(SKILLS.map(v => [v.id, v.uses]));
         state.mageUses = { heal: 2 };
         sfx('heal');
@@ -5420,7 +5441,7 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
   }
   function drawBattleHero() {
     let party = state.companion.active,
-      baseX = party ? 49 : 69,
+      baseX = memberAnchorX(state.hero),
       h = party ? 145 : 166,
       idle = state.busy ? 0 : Math.sin(performance.now() / 310),
       x = baseX + (state.heroLunge || 0) + (state.heroHit ? -5 + idle * 2 : 0),
@@ -5464,7 +5485,7 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
     if (!state.companion.active) return;
     let cast = state.mageCast || 0,
       idle = state.busy ? 0 : Math.sin(performance.now() / 360 + 1.7),
-      x = 111 + (state.mageLunge || 0) + cast * 12 + (state.mageHit ? -5 : 0),
+      x = memberAnchorX(state.companion) + (state.mageLunge || 0) + cast * 12 + (state.mageHit ? -5 : 0),
       bottom = 190 + (state.mageLift || 0) - cast * 9 + idle * 1.6,
       h = 132 + cast * 8;
     if (!mageBattleReady) {
@@ -5504,8 +5525,8 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
   function drawBattleAuras() {
     let t = performance.now() / 150,
       members = [
-        { m: state.hero, x: state.companion.active ? 49 : 69, y: 157 },
-        { m: state.companion, x: 111, y: 153 },
+        { m: state.hero, x: memberAnchorX(state.hero), y: 157 },
+        { m: state.companion, x: memberAnchorX(state.companion), y: 153 },
       ];
     X.save();
     X.globalCompositeOperation = 'lighter';
@@ -5606,7 +5627,7 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
       let p = state.sparkFx.p,
         flash = Math.max(0, 1 - Math.abs(p - 0.32) / 0.24),
         fade = Math.min(1, p * 5) * Math.min(1, (1 - p) * 5),
-        cx = state.sparkFx.actor === 'hero' ? (state.companion.active ? 49 : 69) : 111;
+        cx = memberAnchorX(memberByKey(state.sparkFx.actor));
       X.save();
       X.globalCompositeOperation = 'lighter';
       X.fillStyle = 'rgba(255,255,225,' + flash * 0.72 + ')';

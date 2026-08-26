@@ -158,6 +158,38 @@ export const TOWNS = Object.freeze({
   }),
 });
 
+// パーティの一覧。並び順・表示名・成長のしかたを、ここ一箇所にまとめる。
+// 二人ぶんの分岐を呼び出し側に散らすと、仲間を増やしたときに同じ枝が
+// もう一式ずつ増えていくため、鍵(hero/mage)から引く表にしている。
+export const MEMBER_ORDER = Object.freeze(['hero', 'mage']);
+export const MEMBER_INFO = Object.freeze({
+  hero: Object.freeze({
+    name: 'ルカ',
+    // レベルアップの報せと間の取り方は、キャラごとに少しずつ違う
+    levelNote: '能力上昇',
+    levelDelay: 950,
+    baseSpd: 10,
+    growth: Object.freeze({ maxHp: 8, atk: 3, def: 2, spdEvery: 2 }),
+    // 敵に狙われる重み。合計に対する比で決まる
+    targetWeight: 58,
+    // 戦闘中の立ち位置。人数で詰め方が変わる
+    anchorX: Object.freeze({ 1: 69, 2: 49 }),
+    floatX: 53,
+    hitFlag: 'heroHit',
+  }),
+  mage: Object.freeze({
+    name: 'ミナ',
+    levelNote: '魔力上昇',
+    levelDelay: 1000,
+    baseSpd: 9,
+    growth: Object.freeze({ maxHp: 6, atk: 3, def: 1, spdEvery: 2 }),
+    targetWeight: 42,
+    anchorX: Object.freeze({ 2: 111 }),
+    floatX: 112,
+    hitFlag: 'mageHit',
+  }),
+});
+
 // 装備。slot: weapon(武器) / armor(体防具)。owner: hero=ルカ mage=ミナ both=共用
 export const EQUIPMENT = Object.freeze({
   rustSword: Object.freeze({
