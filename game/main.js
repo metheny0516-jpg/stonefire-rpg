@@ -3094,17 +3094,12 @@ import { createGameAudio } from './audio-engine.js?v=51-unlock-fix';
       requestAnimationFrame(frame);
     });
   }
-  // 敵の狙い先。ルカに寄せつつ、仲間が増えたぶんだけ被弾が散るようにする。
+  // 敵の狙い先は、生きている仲間から等しく選ぶ。
+  // 誰かを狙われにくくすると、被弾の読みが利いてしまってつまらない。
   function pickEnemyTarget() {
     let living = livingMembers();
     if (living.length <= 1) return living[0] || null;
-    let weights = living.map(m => memberInfo(m).targetWeight),
-      roll = Math.random() * weights.reduce((sum, w) => sum + w, 0);
-    for (let i = 0; i < living.length; i++) {
-      roll -= weights[i];
-      if (roll < 0) return living[i];
-    }
-    return living[living.length - 1];
+    return living[Math.floor(Math.random() * living.length)];
   }
   async function enemyHit(target, multiplier, label, savage = false) {
     if (!target || target.hp <= 0) return 0;

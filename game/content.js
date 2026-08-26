@@ -170,8 +170,6 @@ export const MEMBER_INFO = Object.freeze({
     levelDelay: 950,
     baseSpd: 10,
     growth: Object.freeze({ maxHp: 8, atk: 3, def: 2, spdEvery: 2 }),
-    // 敵に狙われる重み。合計に対する比で決まる
-    targetWeight: 58,
     // 戦闘中の立ち位置。人数で詰め方が変わる
     anchorX: Object.freeze({ 1: 69, 2: 49 }),
     floatX: 53,
@@ -183,7 +181,6 @@ export const MEMBER_INFO = Object.freeze({
     levelDelay: 1000,
     baseSpd: 9,
     growth: Object.freeze({ maxHp: 6, atk: 3, def: 1, spdEvery: 2 }),
-    targetWeight: 42,
     anchorX: Object.freeze({ 2: 111 }),
     floatX: 112,
     hitFlag: 'mageHit',
